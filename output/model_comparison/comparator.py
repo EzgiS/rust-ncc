@@ -1,12 +1,11 @@
 import os
 import numpy as np
 
-
 labels = ["vertex_coords", "rac_acts",
           "rac_inacts", "rho_acts",
           "rho_inacts", "uivs",
           "rgtp_forces", "edge_strains", "edge_forces",
-          "avg_tens_strain", "cyto_forces"]
+          "avg_tens_strain", "cyto_forces", "rfs", "next_update"]
 
 def process_lines(fp):
     with open(fp, 'r') as rf:

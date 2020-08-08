@@ -6,17 +6,17 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::cell::state::fmt_var_arr;
 use crate::math::hill_function3;
 use crate::parameters::Parameters;
 use crate::utils::{circ_ix_minus, circ_ix_plus};
-use crate::world::RandomEventGenerator;
 use crate::NVERTS;
 use avro_schema_derive::Schematize;
-use rand::rngs::SmallRng;
-use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
-use rand_distr::{Distribution, Uniform};
+use rand_distr::Uniform;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::fmt::Display;
 
 #[allow(unused)]
 pub enum RgtpLayout {
@@ -123,7 +123,8 @@ pub fn calc_kgtps_rac(
             }
         };
         let auto = auto_factor * kgtp_rac_auto;
-        kgtps_rac[i] = base + auto;
+        let r = base + auto;
+        kgtps_rac[i] = r;
     }
 
     kgtps_rac
@@ -195,52 +196,57 @@ pub struct RacRandState {
 }
 
 impl RacRandState {
-    pub fn gen_rand_factors(
-        rng: &mut SmallRng,
-        num_rand_verts: usize,
-        rand_mag: f32,
-    ) -> [f32; NVERTS as usize] {
-        let vs = (0..NVERTS as usize).collect::<Vec<usize>>();
-        let mut r = [0.0; NVERTS as usize];
-        vs.choose_multiple(rng, num_rand_verts)
-            .for_each(|&v| r[v] = rand_mag);
+    pub fn gen_rand_factors(tstep: u32, rand_mag: f32) -> [f32; NVERTS as usize] {
+        let possible_rfs: [[f32; 16]; 6] = [
+            [
+                1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+            ],
+            [
+                0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+            ],
+            [
+                0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+            ],
+            [
+                1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+            ],
+            [
+                0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+            ],
+            [
+                0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+            ],
+        ];
+        let mut r = [0.0_f32; 16];
+        let a = tstep / 1200;
+        let b: u32 = 6;
+        let ix = (((a % b) + b) % b) as usize;
+        (0..16_usize).for_each(|i| r[i] = possible_rfs[ix][i] * rand_mag);
         r
     }
 
-    pub fn init(rng: Option<&mut SmallRng>, parameters: &Parameters) -> RacRandState {
-        match rng {
-            Some(r) => {
-                let ut = Uniform::from(0.0..parameters.rand_avg_t);
-                RacRandState {
-                    next_update: ut.sample(r).floor() as u32,
-                    x_rands: Self::gen_rand_factors(
-                        r,
-                        parameters.num_rand_vs as usize,
-                        parameters.rand_mag,
-                    ),
-                }
-            }
-            None => RacRandState {
-                next_update: 0,
-                x_rands: [0.0; NVERTS as usize],
-            },
+    pub fn init(parameters: &Parameters) -> RacRandState {
+        RacRandState {
+            next_update: 1200,
+            x_rands: Self::gen_rand_factors(0, parameters.rand_mag),
         }
     }
 
-    pub fn update(
-        &self,
-        cr: &mut RandomEventGenerator,
-        tstep: u32,
-        parameters: &Parameters,
-    ) -> RacRandState {
-        let next_update = tstep + cr.sample().floor() as u32;
+    pub fn update(&self, tstep: u32, parameters: &Parameters) -> RacRandState {
+        let x_rands = Self::gen_rand_factors(tstep, parameters.rand_mag);
+        let next_update = tstep + 1200;
         println!("random update from {} to {}", tstep, next_update);
-        let x_rands =
-            Self::gen_rand_factors(&mut cr.rng, parameters.num_rand_vs, parameters.rand_mag);
         println!("{:?}", x_rands);
         RacRandState {
             next_update,
             x_rands,
         }
+    }
+}
+
+impl Display for RacRandState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "next_update: {}", self.next_update)?;
+        fmt_var_arr(f, "rfs", &self.x_rands)
     }
 }

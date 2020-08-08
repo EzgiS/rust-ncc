@@ -177,7 +177,7 @@ pub struct CellDepVars {
     mech_state: MechState,
 }
 
-fn fmt_var_arr<T: fmt::Display>(
+pub fn fmt_var_arr<T: fmt::Display>(
     f: &mut fmt::Formatter<'_>,
     description: &str,
     vars: &[T; NVERTS as usize],

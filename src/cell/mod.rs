@@ -17,7 +17,6 @@ use crate::math::geometry::calc_poly_area;
 use crate::math::p2d::P2D;
 use crate::parameters::Parameters;
 use crate::world::interactions::InteractionState;
-use crate::world::RandomEventGenerator;
 use crate::NVERTS;
 use avro_schema_derive::Schematize;
 use serde::{Deserialize, Serialize};
@@ -59,7 +58,6 @@ impl Cell {
         group_ix: u32,
         vertex_gen_info: VertexGenInfo,
         parameters: &Parameters,
-        reg: Option<&mut RandomEventGenerator>,
     ) -> Cell {
         let vertex_coords = match vertex_gen_info {
             VertexGenInfo::Centroid(centroid) => gen_vertex_coords(centroid, parameters.cell_r),
@@ -68,23 +66,17 @@ impl Cell {
         let (rac_acts, rac_inacts) = gen_rgtp_distrib(
             parameters.init_frac_active,
             parameters.init_frac_inactive,
-            &RgtpLayout::Random,
-            //&RgtpLayout::BiasedVertices(vec![0, 1, 2, 3]),
+            //&RgtpLayout::Random,
+            &RgtpLayout::BiasedVertices(vec![0, 1, 2, 3]),
         );
         let (rho_acts, rho_inacts) = gen_rgtp_distrib(
             parameters.init_frac_active,
             parameters.init_frac_inactive,
-            &RgtpLayout::Random,
-            //&RgtpLayout::BiasedVertices(vec![8, 9, 10, 11]),
+            //&RgtpLayout::Random,
+            &RgtpLayout::BiasedVertices(vec![8, 9, 10, 11]),
         );
         let state = State::new(vertex_coords, rac_acts, rac_inacts, rho_acts, rho_inacts);
-        let rac_rand_state = RacRandState::init(
-            match reg {
-                Some(cr) => Some(&mut cr.rng),
-                None => None,
-            },
-            parameters,
-        );
+        let rac_rand_state = RacRandState::init(parameters);
         Cell {
             ix,
             group_ix,
@@ -98,33 +90,34 @@ impl Cell {
         &self,
         tstep: u32,
         inter_state: &InteractionState,
-        rng: Option<&mut RandomEventGenerator>,
         parameters: &Parameters,
     ) -> Cell {
         let mut state = self.state;
         let nsteps: u32 = 10;
         let dt = 1.0 / (nsteps as f32);
         for i in 0..nsteps {
-            //println!("++++++++++++");
-            //println!("{}", state);
-            //let dep_vars =
-            //    State::calc_dep_vars(&state, &self.rac_rand_state, inter_state, parameters);
-            //println!("{}", dep_vars);
-            //println!("++++++++++++");
+            println!("++++++++++++");
+            println!("{}", state);
+            let dep_vars =
+                State::calc_dep_vars(&state, &self.rac_rand_state, inter_state, parameters);
+            println!("{}", dep_vars);
+            println!("++++++++++++");
             let delta = State::dynamics_f(&state, &self.rac_rand_state, &inter_state, parameters);
             state = state + dt * delta;
         }
-        // println!("++++++++++++");
+        println!("++++++++++++");
         #[cfg(debug_assertions)]
         state.validate("euler", &parameters);
         // println!("{}", state);
-        // let dep_vars = CellState::calc_dep_vars(&state, &self.rac_randomization, inter_state, parameters);
+        // let dep_vars = State::calc_dep_vars(&state, &self.rac_rand_state, inter_state, parameters);
         // println!("{}", dep_vars);
-        // println!("++++++++++++");
-        let rac_rand_state = match (tstep == self.rac_rand_state.next_update, rng) {
-            (true, Some(cr)) => self.rac_rand_state.update(cr, tstep, parameters),
-            _ => self.rac_rand_state,
+        let rac_rand_state = if tstep == self.rac_rand_state.next_update {
+            self.rac_rand_state.update(tstep, parameters)
+        } else {
+            self.rac_rand_state
         };
+        println!("{}", rac_rand_state);
+        println!("++++++++++++");
         Cell {
             ix: self.ix,
             group_ix: self.group_ix,
@@ -138,7 +131,6 @@ impl Cell {
         &self,
         tstep: u32,
         inter_state: &InteractionState,
-        rng: Option<&mut RandomEventGenerator>,
         parameters: &Parameters,
     ) -> Cell {
         // println!("using rkdp5...");
@@ -168,9 +160,10 @@ impl Cell {
         //println!("{}", state);
         //let dep_vars = State::calc_dep_vars(&state, &self.rac_rand_state, inter_state, parameters);
         //println!("{}", dep_vars);
-        let rac_rand_state = match (tstep == self.rac_rand_state.next_update, rng) {
-            (true, Some(cr)) => self.rac_rand_state.update(cr, tstep, parameters),
-            _ => self.rac_rand_state,
+        let rac_rand_state = if tstep == self.rac_rand_state.next_update {
+            self.rac_rand_state.update(tstep, parameters)
+        } else {
+            self.rac_rand_state
         };
         Cell {
             ix: self.ix,

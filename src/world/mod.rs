@@ -21,10 +21,6 @@ use crate::world::interactions::InteractionState;
 use crate::NVERTS;
 use avro_rs::Writer;
 use avro_schema_derive::Schematize;
-use once_cell::unsync::Lazy;
-use rand::rngs::SmallRng;
-use rand::{thread_rng, SeedableRng};
-use rand_distr::{Distribution, Normal};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -60,17 +56,12 @@ struct WorldChemState {
 }
 
 impl WorldState {
-    fn simulate(
-        &self,
-        cell_rngs: &mut [Option<RandomEventGenerator>],
-        group_parameters: &[Parameters],
-    ) -> WorldState {
+    fn simulate(&self, group_parameters: &[Parameters]) -> WorldState {
         let mut cells = Vec::with_capacity(self.cells.len());
         for c in self.cells.iter() {
-            cells.push(c.simulate_rkdp5(
+            cells.push(c.simulate_euler(
                 self.tstep,
                 &self.interactions[c.ix as usize],
-                cell_rngs[c.ix as usize].as_mut(),
                 &group_parameters[c.group_ix as usize],
             ));
         }
@@ -161,22 +152,10 @@ impl WorldState {
     }
 }
 
-pub struct RandomEventGenerator {
-    pub(crate) rng: SmallRng,
-    distrib: Normal<f32>,
-}
-
-impl RandomEventGenerator {
-    pub fn sample(&mut self) -> f32 {
-        self.distrib.sample(&mut self.rng)
-    }
-}
-
 pub struct World {
     world_parameters: WorldParameters,
     group_parameters: Vec<Parameters>,
     history: Vec<WorldState>,
-    cell_regs: Vec<Option<RandomEventGenerator>>,
     state: WorldState,
 }
 
@@ -186,8 +165,6 @@ impl World {
         let mut cells = vec![];
         let world_parameters = WorldParameters::default();
         let mut group_parameters = vec![];
-        let mut primary = thread_rng();
-        let mut cell_regs = vec![];
         for (gix, cg) in experiment.cell_groups.iter().enumerate() {
             let user_parameters =
                 InputParameters::default().apply_overrides(&cg.parameter_overrides);
@@ -200,25 +177,12 @@ impl World {
             )
             .unwrap();
             for cc in cell_centroids.into_iter() {
-                let normal = Lazy::new(|| {
-                    Normal::new(parameters.rand_avg_t, parameters.rand_std_t).unwrap()
-                });
-                let mut creg = if parameters.randomization {
-                    Some(RandomEventGenerator {
-                        rng: SmallRng::from_rng(&mut primary).unwrap(),
-                        distrib: *normal,
-                    })
-                } else {
-                    None
-                };
                 cells.push(Cell::new(
                     num_cells,
                     gix as u32,
                     VertexGenInfo::Centroid(cc),
                     &parameters,
-                    creg.as_mut(),
                 ));
-                cell_regs.push(creg);
                 num_cells += 1;
             }
             group_parameters.push(parameters);
@@ -233,7 +197,6 @@ impl World {
         World {
             world_parameters,
             group_parameters,
-            cell_regs,
             history,
             state,
         }
@@ -245,9 +208,7 @@ impl World {
         while self.state.tstep < num_tsteps {
             // println!("========================================");
             // println!("tstep: {}/{}", self.state.tstep, num_tsteps);
-            let new_state = self
-                .state
-                .simulate(self.cell_regs.as_mut_slice(), &self.group_parameters);
+            let new_state = self.state.simulate(&self.group_parameters);
             self.history.push(new_state.clone());
             self.state = new_state;
             //println!("========================================")

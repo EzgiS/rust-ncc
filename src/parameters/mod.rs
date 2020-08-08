@@ -60,7 +60,7 @@ impl Default for WorldParameters {
             k_mem_on: Tinv(0.02),
             kgtp: Tinv(1e-4),
             kdgtp: Tinv(1e-4),
-            frac_rgtp: 0.1,
+            frac_rgtp: 1.0,
             //coa_dist: Length(110.0).micro(),
         }
     }
@@ -235,7 +235,7 @@ impl Default for InputParameters {
             coa_half_d: Length(110.0e-6),
             kdgtp_rac: 8.0,
             kdgtp_rho_on_rac: 4000.0,
-            halfmax_tension_inhib: 0.1,
+            halfmax_tension_inhib: 0.01,
             tension_inhib: 40.0,
             kgtp_rho: 28.0,
             kgtp_auto_rho: 390.0,
@@ -245,7 +245,7 @@ impl Default for InputParameters {
             randomization: true,
             rand_avg_t: Time(40.0 * 60.0),
             rand_std_t: Time(0.2 * 40.0 * 60.0),
-            rand_mag: 12.0,
+            rand_mag: 8.0,
             rand_vs: 0.25,
         }
     }
