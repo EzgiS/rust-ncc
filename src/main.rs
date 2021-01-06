@@ -21,13 +21,12 @@ use std::time::Instant;
 pub const NVERTS: usize = 16;
 
 fn main() {
-    let exp = experiments::separeted_pair::generate(Some(3));
+    let exp = experiments::four_cells::generate(Some(3));
     #[cfg(target_os = "windows")]
     let output_dir = PathBuf::from(format!(
         "{}\\output",
         std::env::current_dir().unwrap().to_str().unwrap()
     ));
-
 
     #[cfg(target_os = "macos")]
     let output_dir = PathBuf::from("./output");

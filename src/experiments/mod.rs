@@ -8,7 +8,8 @@
 
 pub mod pairs;
 //pub mod single;
-pub mod separeted_pair;
+//pub mod separeted_pair;
+pub mod four_cells;
 
 use crate::cell::chemistry::{
     DistributionScheme, DistributionType, RgtpDistribution,
@@ -171,7 +172,6 @@ fn gen_default_adhesion_mag(
     // Warning: going above this value may result in weirdness!
     // Danger zone: (Length(1.0).micro().g() * Tinv(1.0).g()).mul_number(0.1)
 
-
     let v =
         (Length(1.0).micro().g() * Tinv(1.0).g()).mul_number(0.25);
     (v * char_quants.eta.g()).to_force().expect("Need a force!")
@@ -186,5 +186,4 @@ fn gen_default_adhesion_mag(
     //          not produce a force. Check units!",
     //     );
     // f_adh.mul_number(multiplier)
-
 }

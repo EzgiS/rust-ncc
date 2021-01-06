@@ -74,14 +74,15 @@ fn cell_groups(
         group1_marked,
         group0_marked,
     );
-    let parameters = raw_params0.gen_parameters(cq);
+    let params0 = raw_params0.gen_parameters(cq);
+    let params1 = raw_params1.gen_parameters(cq);
     let bottom_left0 = (Length(0.0), Length(0.0));
     let num_cells0 = 1;
     let group0_layout = CellGroup {
         num_cells: num_cells0,
         layout: group_bbox(num_cells0, cq, bottom_left0, 1, 1)
             .unwrap(),
-        parameters,
+        parameters: params0,
     };
     let bottom_left1 =
         (Length(0.0), raw_params1.cell_diam.mul_number(2.0));
@@ -90,7 +91,7 @@ fn cell_groups(
         num_cells: num_cells1,
         layout: group_bbox(num_cells1, cq, bottom_left1, 1, 1)
             .unwrap(),
-        parameters,
+        parameters: params1,
     };
     vec![group0_layout, group1_layout]
 }
