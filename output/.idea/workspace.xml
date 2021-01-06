@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d250ec0e-c1cc-4fff-a21f-3ca5622767ff" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../avro-schema-derive/src/avro_schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../avro-schema-derive/src/avro_schema.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../avro-schema-derive/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../avro-schema-derive/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/probing.py" beforeDir="false" afterPath="$PROJECT_DIR$/probing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/cell.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/cell.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/parameters.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/parameters.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/rkdp5.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/rkdp5.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/schema.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/world.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../src/world.rs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="1f6vuYnYVyazs0AxZwoEOkKL1q0" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.first.check.clang-format" value="false" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
+  </component>
+  <component name="RunManager">
+    <configuration name="probing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="output" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/probing.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.probing" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d250ec0e-c1cc-4fff-a21f-3ca5622767ff" name="Default Changelist" comment="" />
+      <created>1595551583545</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1595551583545</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="2" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1595554894443">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state x="2" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1093.574@0.0.1093.574" timestamp="1595554894443" />
+    <state width="1072" height="162" key="GridCell.Tab.0.bottom" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.0.bottom/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.0.center" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.0.center/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.0.left" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.0.left/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.0.right" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.0.right/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.1.bottom" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.1.bottom/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.1.center" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.1.center/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.1.left" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.1.left/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state width="1072" height="162" key="GridCell.Tab.1.right" timestamp="1595555105818">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state width="1072" height="162" key="GridCell.Tab.1.right/0.0.1093.574@0.0.1093.574" timestamp="1595555105818" />
+    <state x="56" y="0" key="SettingsEditor" timestamp="1595553116274">
+      <screen x="0" y="0" width="1093" height="574" />
+    </state>
+    <state x="56" y="0" key="SettingsEditor/0.0.1093.574@0.0.1093.574" timestamp="1595553116274" />
+  </component>
+</project>
