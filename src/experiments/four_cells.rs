@@ -30,7 +30,7 @@ fn group_layout(
         y: char_quants.normalize(&Length(0.0)),
     };
     let r = GroupBBox {
-        width: 1,
+        width: 2,
         height: 2,
         bottom_left: centroid,
     };
@@ -48,7 +48,7 @@ fn cell_groups(
     rng: &mut Pcg32,
     cq: &CharQuantities,
 ) -> Vec<CellGroup> {
-    let num_cells = 2;
+    let num_cells = 4;
     vec![CellGroup {
         num_cells,
         layout: group_layout(num_cells, cq).unwrap(),
