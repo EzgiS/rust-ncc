@@ -5,7 +5,7 @@ import json
 import cbor2
 
 output = None
-file_name = "history_pair.cbor"
+file_name = "history_separated_cells.cbor"
 with open(file_name, mode='rb') as sf:
     output = cbor2.load(sf)
 
