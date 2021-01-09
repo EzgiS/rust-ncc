@@ -92,10 +92,10 @@ fn raw_world_parameters(
                 ),
                 adh_mag: Some(gen_default_adhesion_mag(
                     char_quants,
-                    10.0,
+                    30.0,
                 )),
-                cal_mag: Some(60.0),
-                cil_mag: 60.0,
+                cal_mag: None,
+                cil_mag: 40.0,
             },
         },
     }
