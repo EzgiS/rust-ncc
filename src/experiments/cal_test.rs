@@ -54,21 +54,25 @@ fn cell_groups(
     rng: &mut Pcg32,
     cq: &CharQuantities,
 ) -> Vec<CellGroup> {
-    let group0_marked = [
+    let group0_marked_rho = [
         false, true, true, true, true, true, true, true, false,
         false, false, false, false, false, false, false,
+    ];
+    let group0_marked = [
+        false, false, false, false, false, false, false, false,
+        false, true, true, true, true, true, true, true,
     ];
     let group1_marked = [
         false, false, false, false, false, false, false, false,
         false, true, true, true, true, true, true, true,
     ];
-    let raw_params0 = gen_default_raw_params(
+    let raw_params0 = gen_default_raw_params_0(
         rng,
         false,
         group0_marked,
-        group1_marked,
+        group0_marked_rho,
     );
-    let raw_params1 = gen_default_raw_params(
+    let raw_params1 = gen_default_raw_params_1(
         rng,
         false,
         group1_marked,
@@ -85,7 +89,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(2.0));
+        (Length(0.0), raw_params1.cell_diam.mul_number(1.2));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -151,7 +155,7 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         raw_world_parameters(&char_quants).refine(&char_quants);
     let cell_groups = cell_groups(&mut rng, &char_quants);
     Experiment {
-        file_name: "separated_pair".to_string(),
+        file_name: "cal_test".to_string(),
         char_quants,
         world_parameters,
         cell_groups,
@@ -160,7 +164,77 @@ pub fn generate(seed: Option<u64>) -> Experiment {
     }
 }
 
-fn gen_default_raw_params(
+fn gen_default_raw_params_0(
+    rng: &mut Pcg32,
+    randomization: bool,
+    marked_rac: [bool; NVERTS],
+    marked_rho: [bool; NVERTS],
+) -> RawParameters {
+    //println!("marking: {:?}", &marked_rac);
+
+    let rgtp_d = (Length(0.1_f32.sqrt()).micro().pow(2.0).g()
+        / Time(1.0).g())
+    .to_diffusion()
+    .unwrap();
+
+    let init_rac = RgtpDistribution::generate(
+        DistributionScheme {
+            frac: 0.05,
+            ty: DistributionType::Specific(marked_rac),
+        },
+        DistributionScheme {
+            frac: 0.1,
+            ty: DistributionType::Random,
+        },
+        rng,
+    )
+    .unwrap();
+
+    let init_rho = RgtpDistribution::generate(
+        DistributionScheme {
+            frac: 0.1,
+            ty: DistributionType::Specific(marked_rho),
+        },
+        DistributionScheme {
+            frac: 0.0,
+            ty: DistributionType::Random,
+        },
+        rng,
+    )
+    .unwrap();
+    RawParameters {
+        cell_diam: Length(40.0).micro(),
+        stiffness_cortex: Stress(8.0).kilo(),
+        lm_h: Length(200.0).nano(),
+        halfmax_rgtp_max_f_frac: 0.3,
+        halfmax_rgtp_frac: 0.4,
+        lm_ss: Stress(10.0).kilo(),
+        rho_friction: 0.2,
+        stiffness_ctyo: Force(1e-7),
+        diffusion_rgtp: rgtp_d,
+        tot_rac: 2.5e6,
+        tot_rho: 1e6,
+        kgtp_rac: 24.0,
+        kgtp_rac_auto: 500.0,
+        kdgtp_rac: 8.0,
+        kdgtp_rho_on_rac: 4000.0,
+        halfmax_tension_inhib: 0.1,
+        tension_inhib: 40.0,
+        kgtp_rho: 28.0,
+        kgtp_auto_rho: 390.0,
+        kdgtp_rho: 60.0,
+        kdgtp_rac_on_rho: 400.0,
+        randomization,
+        rand_avg_t: Time(40.0 * 60.0),
+        rand_std_t: Time(0.2 * 40.0 * 60.0),
+        rand_mag: 10.0,
+        rand_vs: 0.25,
+        init_rac,
+        init_rho,
+    }
+}
+
+fn gen_default_raw_params_1(
     rng: &mut Pcg32,
     randomization: bool,
     marked_rac: [bool; NVERTS],

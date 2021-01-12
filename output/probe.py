@@ -6,7 +6,7 @@ import cbor2
 
 output = None
 
-file_name = "history_four_cells.cbor"
+file_name = "history_cal_test.cbor"
 
 with open(file_name, mode='rb') as sf:
     output = cbor2.load(sf)
@@ -139,8 +139,8 @@ def paint(delta):
     global num_tsteps
     ax.cla()
     ax.set_aspect('equal')
-    ax.set_xlim([-40, 200])
-    ax.set_ylim([-40, 200])
+    ax.set_xlim([-40, 100])
+    ax.set_ylim([-200, 150])
     for (ci, poly) in enumerate(poly_per_cell_per_tstep[tstep_ix]):
         if ci == 0:
             poly_color = "k"
