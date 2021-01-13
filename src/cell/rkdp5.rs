@@ -1,13 +1,13 @@
 #![allow(unused)]
-use crate::cell::{chemistry::RacRandState, states::CoreState};
-use crate::interactions::Interactions;
+use crate::cell::{chemistry::RacRandState, core_state::CoreState};
+use crate::interactions::CellInteractions;
 use crate::math::{max_f32, min_f32};
 use crate::parameters::{Parameters, WorldParameters};
 
 type CellDynamicsFn = fn(
     state: &CoreState,
     rac_random_state: &RacRandState,
-    interactions: &Interactions,
+    interactions: &CellInteractions,
     world_parameters: &WorldParameters,
     parameters: &Parameters,
 ) -> CoreState;
@@ -62,7 +62,7 @@ const FAC: f32 = 0.8; // safety factor, approximately 0.38^QP1, see explanation 
 const FAC_MAX: f32 = (5.0 - 1.5) / 2.0; // see explanation for equation 4.12 in HWN vol1
 
 pub struct AuxArgs {
-    pub max_iters: u32,
+    pub max_iters: usize,
     pub atol: f32,
     pub rtol: f32,
     pub init_h_factor: Option<f32>,
@@ -81,8 +81,8 @@ pub struct SolverArgs {
 
 pub struct Solution {
     pub y: Result<CoreState, String>,
-    pub num_rejections: u32,
-    pub num_iters: u32,
+    pub num_rejections: usize,
+    pub num_iters: usize,
 }
 
 pub struct Ks {
@@ -101,7 +101,7 @@ impl Ks {
         h: f32,
         init_state: CoreState,
         rand_state: &RacRandState,
-        inter_state: &Interactions,
+        inter_state: &CellInteractions,
         world_parameters: &WorldParameters,
         parameters: &Parameters,
     ) -> Ks {
@@ -213,7 +213,7 @@ pub fn integrator(
     f: CellDynamicsFn,
     init_state: &CoreState,
     rand_state: &RacRandState,
-    inter_state: &Interactions,
+    inter_state: &CellInteractions,
     world_parameters: &WorldParameters,
     parameters: &Parameters,
     mut aux_args: AuxArgs,
@@ -233,10 +233,10 @@ pub fn integrator(
         0.1 * dt
     };
 
-    let mut num_iters = 0_u32;
+    let mut num_iters = 0_usize;
     let mut fac_max = FAC_MAX;
     let mut last_iter = false;
-    let mut num_rejections: u32 = 0;
+    let mut num_rejections: usize = 0;
 
     while num_iters < max_iters {
         let Ks {

@@ -8,16 +8,14 @@
 pub mod hardio;
 #[cfg(feature = "validate")]
 use crate::cell::confirm_volume_exclusion;
-use crate::cell::states::CoreState;
-use crate::cell::Cell;
+use crate::cell::core_state::CoreState;
+use crate::cell::CellState;
 use crate::experiments::{CellGroup, Experiment};
 use crate::interactions::{
-    InteractionGenerator, Interactions, RelativeRgtpActivity,
+    CellInteractions, InteractionGenerator, RelativeRgtpActivity,
 };
 use crate::math::v2d::V2D;
-use crate::parameters::{
-    CharQuantities, Parameters, WorldParameters,
-};
+use crate::parameters::{Parameters, WorldParameters};
 use crate::NVERTS;
 //use rand_core::SeedableRng;
 use crate::utils::pcg32::Pcg32;
@@ -29,30 +27,31 @@ use std::error::Error;
 use std::f32::consts::PI;
 use std::path::PathBuf;
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Cells {
-    pub states: Vec<Cell>,
-    pub interactions: Vec<Interactions>,
+    pub cell_states: Vec<CellState>,
+    pub interactions: Vec<CellInteractions>,
 }
 
 impl Cells {
     fn simulate(
         &self,
-        tstep: u32,
+        tstep: usize,
         rng: &mut Pcg32,
         world_parameters: &WorldParameters,
         group_parameters: &[Parameters],
         interaction_generator: &mut InteractionGenerator,
     ) -> Result<Cells, String> {
         let mut new_cell_states =
-            vec![self.states[0]; self.states.len()];
+            vec![self.cell_states[0]; self.cell_states.len()];
         let shuffled_cells = {
-            let mut crs = self.states.iter().collect::<Vec<&Cell>>();
+            let mut crs =
+                self.cell_states.iter().collect::<Vec<&CellState>>();
             crs.shuffle(rng);
             crs
         };
         for cell_state in shuffled_cells {
-            let ci = cell_state.ix;
+            let ci = cell_state.ix as usize;
             let contact_data =
                 interaction_generator.get_contact_data(ci);
 
@@ -61,12 +60,15 @@ impl Cells {
                 &self.interactions[ci],
                 contact_data,
                 world_parameters,
-                &group_parameters[cell_state.group_ix],
+                &group_parameters[cell_state.group_ix as usize],
                 rng,
             )?;
 
-            interaction_generator
-                .update(ci, &new_cell_state.core.poly);
+            interaction_generator.update(
+                tstep,
+                ci,
+                &new_cell_state.core.poly,
+            );
 
             #[cfg(feature = "validate")]
             confirm_volume_exclusion(
@@ -77,90 +79,50 @@ impl Cells {
 
             new_cell_states[ci] = new_cell_state;
         }
-        Ok(Cells {
-            states: new_cell_states,
-            interactions: interaction_generator.generate(),
-        })
+        let rel_rgtps = new_cell_states
+            .iter()
+            .map(|c| {
+                let parameters = &group_parameters[c.group_ix];
+                c.core.calc_relative_rgtp_activity(parameters)
+            })
+            .collect::<Vec<[RelativeRgtpActivity; NVERTS]>>();
+
+        let cells = Cells {
+            cell_states: new_cell_states,
+            interactions: interaction_generator.generate(rel_rgtps),
+        };
+        let adh_0_4 = cells.interactions[0].x_adhs[4];
+        let adh_1_12 = cells.interactions[1].x_adhs[12];
+
+        if adh_0_4.mag() > 0.0 || adh_1_12.mag() > 0.0 {
+            println!("tstep: {}", tstep);
+            println!("({:?}) ci 0 4 cal: {}", cells.cell_states[0].core.calc_relative_rgtp_activity(&group_parameters[0])[4], cells.interactions[0].x_cals[4]);
+            println!("({:?}) ci 1 12 cal: {}", cells.cell_states[1].core.calc_relative_rgtp_activity(&group_parameters[1])[12], cells.interactions[1].x_cals[12]);
+        }
+
+        Ok(cells)
     }
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct DeepSnapshot {
-    pub tstep: u32,
+pub struct Snapshot {
+    pub tstep: usize,
     pub interaction_generator: InteractionGenerator,
     pub rng: Pcg32,
     pub cells: Cells,
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
-pub struct Snapshot {
-    pub tstep: u32,
-    pub cells: Cells,
-}
-
-impl DeepSnapshot {
-    pub fn to_mini(&self) -> Snapshot {
-        Snapshot {
-            tstep: self.tstep,
-            cells: self.cells.clone(),
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize, Clone, Default)]
-pub struct History {
-    pub snap_freq: u32,
-    pub char_quants: CharQuantities,
-    pub world_params: WorldParameters,
-    pub cell_params: Vec<Parameters>,
-    pub snapshots: Vec<Snapshot>,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct DeepHistory {
-    pub snap_freq: u32,
-    pub char_quants: CharQuantities,
-    pub world_params: WorldParameters,
-    pub cell_params: Vec<Parameters>,
-    pub snapshots: Vec<DeepSnapshot>,
-}
-
-impl DeepHistory {
-    pub fn to_history(&self) -> History {
-        History {
-            snap_freq: self.snap_freq,
-            char_quants: self.char_quants,
-            world_params: self.world_params.clone(),
-            cell_params: self.cell_params.clone(),
-            snapshots: self
-                .snapshots
-                .iter()
-                .map(|fs| fs.to_mini())
-                .collect::<Vec<Snapshot>>(),
-        }
-    }
-}
-
-impl Iterator for Cells {
-    type Item = ();
-
-    fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
-    }
-}
-
 pub struct World {
-    char_quants: CharQuantities,
-    tstep: u32,
+    tstep_length: f32,
+    tstep: usize,
     world_params: WorldParameters,
     group_params: Vec<Parameters>,
-    pub history: Vec<DeepSnapshot>,
+    pub history: Vec<Snapshot>,
     cells: Cells,
     interaction_generator: InteractionGenerator,
     pub rng: Pcg32,
     out_dir: PathBuf,
     file_name: String,
-    snap_freq: u32,
 }
 
 fn gen_poly(centroid: &V2D, radius: f32) -> [V2D; NVERTS] {
@@ -177,11 +139,7 @@ fn gen_poly(centroid: &V2D, radius: f32) -> [V2D; NVERTS] {
 }
 
 impl World {
-    pub fn new(
-        experiment: Experiment,
-        output_dir: PathBuf,
-        snap_freq: u32,
-    ) -> World {
+    pub fn new(experiment: Experiment, output_dir: PathBuf) -> World {
         // Unpack relevant info from `Experiment` data structure.
         let Experiment {
             char_quants,
@@ -202,7 +160,8 @@ impl World {
         let mut cell_group_ixs = vec![];
         let mut cell_centroids = vec![];
         cell_groups.iter().enumerate().for_each(|(gix, cg)| {
-            cell_group_ixs.append(&mut vec![gix; cg.num_cells]);
+            cell_group_ixs
+                .append(&mut vec![gix; cg.num_cells as usize]);
             cell_centroids
                 .append(&mut gen_cell_centroids(cg).unwrap())
         });
@@ -241,11 +200,10 @@ impl World {
         // Create a new `InteractionGenerator`.
         let interaction_generator = InteractionGenerator::new(
             &cell_polys,
-            &cell_rgtps,
             world_params.interactions.clone(),
         );
         // Generate initial cell interactions.
-        let cell_interactions = interaction_generator.generate();
+        let cell_interactions = interaction_generator.generate(cell_rgtps);
         // Create `Cell` structures to represent each cell, and the random number generator associated per cell.
         let mut cell_states = vec![];
         for (cell_ix, group_ix) in
@@ -257,9 +215,9 @@ impl World {
             let parameters = &group_params[group_ix];
             let mut cell_rng = Pcg32::seed_from_u64(rng.next_u64());
             // Create a new cell.
-            cell_states.push(Cell::new(
-                cell_ix,
-                group_ix,
+            cell_states.push(CellState::new(
+                cell_ix as usize,
+                group_ix as usize,
                 cell_core_states[cell_ix],
                 &cell_interactions[cell_ix],
                 parameters,
@@ -267,10 +225,10 @@ impl World {
             ));
         }
         let cells = Cells {
-            states: cell_states,
+            cell_states,
             interactions: cell_interactions.clone(),
         };
-        let history = vec![DeepSnapshot {
+        let history = vec![Snapshot {
             tstep: 0,
             interaction_generator: interaction_generator.clone(),
             rng,
@@ -278,7 +236,7 @@ impl World {
         }];
         World {
             tstep: 0,
-            char_quants,
+            tstep_length: char_quants.time(),
             world_params,
             group_params,
             history,
@@ -287,12 +245,11 @@ impl World {
             rng,
             out_dir: output_dir,
             file_name: experiment.file_name,
-            snap_freq,
         }
     }
 
-    pub fn take_snapshot(&self) -> DeepSnapshot {
-        DeepSnapshot {
+    pub fn as_history(&self) -> Snapshot {
+        Snapshot {
             tstep: self.tstep,
             interaction_generator: self.interaction_generator.clone(),
             rng: self.rng,
@@ -300,10 +257,20 @@ impl World {
         }
     }
 
-    pub fn simulate(&mut self, final_tpoint: f32) {
+    pub fn simulate(
+        &mut self,
+        final_tpoint: f32,
+        save_frequency: usize,
+    ) {
         let num_tsteps =
-            (final_tpoint / self.char_quants.time()).ceil() as u32;
+            (final_tpoint / self.tstep_length).ceil() as usize;
         while self.tstep < num_tsteps {
+            //println!("------------------");
+            let tstep = self.tstep;
+            //println!("tstep: {}", self.tstep);
+            // if self.tstep == 1760 {
+            //     println!("at tstep 1760!")
+            // }
             let new_cells: Cells = self
                 .cells
                 .simulate(
@@ -324,43 +291,48 @@ impl World {
 
             self.cells = new_cells;
             self.tstep += 1;
-            if self.tstep % self.snap_freq == 0 {
-                self.history.push(self.take_snapshot());
+            if self.tstep % save_frequency == 0 {
+                self.history.push(self.as_history());
             }
-        }
-    }
-
-    pub fn deep_history(&self) -> DeepHistory {
-        DeepHistory {
-            snap_freq: self.snap_freq,
-            char_quants: self.char_quants,
-            world_params: self.world_params.clone(),
-            cell_params: self
-                .cells
-                .states
-                .iter()
-                .map(|s| self.group_params[s.group_ix].clone())
-                .collect::<Vec<Parameters>>(),
-            snapshots: self.history.clone(),
-        }
-    }
-
-    pub fn history(&self) -> History {
-        History {
-            snap_freq: self.snap_freq,
-            char_quants: self.char_quants,
-            world_params: self.world_params.clone(),
-            cell_params: self
-                .cells
-                .states
-                .iter()
-                .map(|s| self.group_params[s.group_ix].clone())
-                .collect::<Vec<Parameters>>(),
-            snapshots: self
-                .history
-                .iter()
-                .map(|fs| fs.to_mini())
-                .collect::<Vec<Snapshot>>(),
+            // if true {
+            //     let ics = self.interaction_generator.generate();
+            //     let c0_cps = self
+            //         .interaction_generator
+            //         .get_close_points(0, 4, 1);
+            //     let c1_cps = self
+            //         .interaction_generator
+            //         .get_close_points(1, 12, 0);
+            //
+            //     if (c0_cps.len() > 0 || c1_cps.len() > 0)
+            //         && (c0_cps
+            //             .iter()
+            //             .any(|cp| cp.get_vector_to_mag() < 0.5)
+            //             || c1_cps
+            //                 .iter()
+            //                 .any(|cp| cp.get_vector_to_mag() < 0.5))
+            //     {
+            //         println!("tstep = {}", tstep);
+            //         println!(
+            //             "ci (0, 4, oci: 1) = {}\nx_adhs[4] = {}",
+            //             c0_cps
+            //                 .iter()
+            //                 .map(|cp| format!("{}", cp))
+            //                 .collect::<Vec<String>>()
+            //                 .join(", "),
+            //             ics[0].x_adhs[4]
+            //         );
+            //         println!(
+            //             "ci (1, 12, oci: 0) = {}\nx_adh[12] = {}",
+            //             c1_cps
+            //                 .iter()
+            //                 .map(|cp| format!("{}", cp))
+            //                 .collect::<Vec<String>>()
+            //                 .join(", "),
+            //             ics[1].x_adhs[12]
+            //         );
+            //         println!("------------------")
+            //     }
+            // }
         }
     }
 
@@ -369,22 +341,26 @@ impl World {
         compact: bool,
         formats: Vec<Format>,
     ) -> Result<(), Box<dyn Error>> {
-        let history = self.history();
-        println!("num snapshots: {}", history.snapshots.len());
         if compact {
+            let data = self
+                .history
+                .iter()
+                .map(|h| (h.tstep, h.cells.clone()))
+                .collect::<Vec<(usize, Cells)>>();
             save_compact(
-                history,
+                data,
                 &self.out_dir,
                 formats,
                 &self.file_name,
             )?;
         } else {
-            save_full(
-                self.deep_history(),
-                &self.out_dir,
-                formats,
-                &self.file_name,
-            )?;
+            let data = self
+                .history
+                .iter()
+                .enumerate()
+                .map(|(ix, snapshot)| (ix as usize, snapshot.clone()))
+                .collect::<Vec<(usize, Snapshot)>>();
+            save_full(data, &self.out_dir, formats, &self.file_name)?;
         }
         Ok(())
     }

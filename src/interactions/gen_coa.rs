@@ -30,7 +30,7 @@ pub struct CoaGenerator {
 }
 
 // pub fn self_intersects(
-//     vi: u32,
+//     vi: usize,
 //     poly: &[V2D; NVERTS],
 //     lseg: &LineSeg2D,
 // ) -> bool {
@@ -51,7 +51,7 @@ pub struct CoaGenerator {
 // }
 
 // pub struct VertexInfo {
-//     ci: u32,
+//     ci: usize,
 //     v: V2D,
 // }
 

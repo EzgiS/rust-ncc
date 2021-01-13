@@ -4,15 +4,24 @@ import numpy as np
 import json
 import cbor2
 
+
 output = None
-file_name = "history_compact_four_cells.cbor"
+
+file_name = "history_cal_test.cbor"
+
 with open(file_name, mode='rb') as sf:
     output = cbor2.load(sf)
 
-snapshots = [s for s in output["snapshots"]]
-tsteps = [s["tstep"] for s in snapshots]
-state_recs = [s["cells"] for s in snapshots]
-frequency = output["snap_freq"]
+tsteps = [o[0] for o in output]
+frequency = tsteps[1] - tsteps[0]
+state_recs = [o[1] for o in output]
+interactions = [rec["interactions"] for rec in state_recs]
+x_cals_0_4 = [inters[0]["x_cals"][4] for inters in interactions]
+x_cals_1_12 = [inters[1]["x_cals"][12] for inters in interactions]
+
+
+# plt.plot(tsteps, x_cals_0_4, color="black", marker=".")
+# plt.plot(tsteps, x_cals_1_12, color="green", marker=".")
 
 def lookup_tstep_ix(tstep):
     return int(np.floor(tstep/frequency))
@@ -28,7 +37,7 @@ def extract_p2ds_from_cell_states(state_key, dat_key, state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
         dat_per_cell = []
-        for cell_rec in rec['states']:
+        for cell_rec in rec['cell_states']:
             dat_per_cell.append(p2ds_to_numpy(cell_rec[state_key][dat_key]))
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
@@ -46,7 +55,7 @@ def extract_scalars(state_key, dat_key, state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
         dat_per_cell = []
-        for cell_rec in rec['states']:
+        for cell_rec in rec['cell_states']:
             dat_per_cell.append(np.array(cell_rec[state_key][dat_key]))
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
@@ -63,7 +72,7 @@ rho_acts_per_cell_per_tstep = extract_scalars('core', 'rho_acts', state_recs)
 rho_act_arrows_per_cell_per_tstep = 50 * rho_acts_per_cell_per_tstep[:, :, :,
                                          np.newaxis] * uivs_per_cell_per_tstep
 
-adhs_per_cell_per_tstep = 5*extract_p2ds_from_interactions('x_adhs', state_recs)
+adhs_per_cell_per_tstep = 11*extract_p2ds_from_interactions('x_adhs', state_recs)
 
 #
 # rho_acts_arrows_per_tstep = []
@@ -138,8 +147,8 @@ def paint(delta):
     global num_tsteps
     ax.cla()
     ax.set_aspect('equal')
-    ax.set_xlim([-40, 200])
-    ax.set_ylim([-40, 200])
+    ax.set_xlim([-40, 100])
+    ax.set_ylim([-200, 150])
     for (ci, poly) in enumerate(poly_per_cell_per_tstep[tstep_ix]):
         if ci == 0:
             poly_color = "k"

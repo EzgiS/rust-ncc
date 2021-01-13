@@ -6,6 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+pub(crate) mod cal_test;
 pub mod cil_test;
 pub mod four_cells;
 pub mod pair;

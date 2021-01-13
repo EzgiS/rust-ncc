@@ -34,11 +34,11 @@ pub fn sort_ixs4d(
 // #[allow(unused)]
 // #[cfg(feature = "validate")]
 // pub fn check_indices4d(
-//     num_cells: u32,
-//     ci: u32,
-//     vi: u32,
-//     oci: u32,
-//     ovi: u32,
+//     num_cells: usize,
+//     ci: usize,
+//     vi: usize,
+//     oci: usize,
+//     ovi: usize,
 // ) {
 //     let oci = fix_oci(ci, oci);
 //
@@ -46,7 +46,7 @@ pub fn sort_ixs4d(
 //         panic!("{} cells tracked, received ci: {}", num_cells, ci);
 //     }
 //
-//     if vi > NVERTS {
+//     if vi > NVERTS as usize {
 //         panic!("{} vertices tracked, received vi: {}", NVERTS, vi);
 //     }
 //
@@ -59,7 +59,7 @@ pub fn sort_ixs4d(
 //         );
 //     }
 //
-//     if ovi > NVERTS {
+//     if ovi > NVERTS as usize {
 //         panic!("{} vertices tracked, received vi: {}", NVERTS, vi);
 //     }
 // }
@@ -73,11 +73,11 @@ pub fn sym_sum(n: usize) -> usize {
 
 // #[cfg(feature = "validate")]
 // pub fn check_sym_indices4d(
-//     num_cells: u32,
-//     ci: u32,
-//     vi: u32,
-//     oci: u32,
-//     ovi: u32,
+//     num_cells: usize,
+//     ci: usize,
+//     vi: usize,
+//     oci: usize,
+//     ovi: usize,
 // ) {
 //     let (ci, vi, oci, ovi) = sort_ixs4d(ci, vi, oci, ovi);
 //
@@ -85,7 +85,7 @@ pub fn sym_sum(n: usize) -> usize {
 //         panic!("{} cells tracked, received ci: {}", num_cells, ci);
 //     }
 //
-//     if vi > NVERTS {
+//     if vi > NVERTS as usize {
 //         panic!("{} vertices tracked, received vi: {}", NVERTS, vi);
 //     }
 //
@@ -96,7 +96,7 @@ pub fn sym_sum(n: usize) -> usize {
 //         );
 //     }
 //
-//     if ovi > NVERTS {
+//     if ovi > NVERTS as usize {
 //         panic!("{} vertices tracked, received vi: {}", NVERTS, vi);
 //     }
 // }

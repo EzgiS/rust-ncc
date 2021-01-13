@@ -20,7 +20,6 @@ use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
 /// Characteristic quantities used for normalization.
-#[derive(Clone, Copy, Deserialize, Serialize, Default)]
 pub struct CharQuantities {
     pub eta: Viscosity,
     pub f: Force,
@@ -188,7 +187,7 @@ pub struct RawWorldParameters {
     pub interactions: RawInteractionParams,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct CloseBounds {
     pub zero_at: f32,
     pub one_at: f32,
@@ -203,7 +202,7 @@ impl CloseBounds {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct PhysicalContactParams {
     /// Maximum distance between two points, for them to be considered
     /// in contact. This is usually set to 0.5 micrometers.
@@ -219,7 +218,7 @@ pub struct PhysicalContactParams {
     pub cil_mag: f32,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct CoaParams {
     //TODO: Expand upon LOS system.
     /// Factor controlling to what extent line-of-sight blockage
@@ -242,7 +241,7 @@ pub struct CoaParams {
     pub distrib_exp: f32,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct ChemAttrParams {
     /// Location of the chemoattractant center.
     pub center: V2D,
@@ -254,7 +253,7 @@ pub struct ChemAttrParams {
     pub slope: f32,
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct BdryParams {
     /// Shape of the boundary.
     pub shape: Vec<V2D>,
@@ -267,7 +266,7 @@ pub struct BdryParams {
     pub mag: f32,
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct InteractionParams {
     pub phys_contact: PhysicalContactParams,
     pub coa: Option<CoaParams>,
@@ -275,7 +274,7 @@ pub struct InteractionParams {
     pub bdry: Option<BdryParams>,
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct WorldParameters {
     /// Viscosity value used to calculate change in position of a
     /// vertex due to calculated forces on it.
@@ -419,7 +418,7 @@ pub struct Parameters {
     /// Magnitude of factor randomly applied to Rac1 activation rate.
     pub rand_mag: f32,
     /// Number of vertices to be selected for random Rac1 activity boost.
-    pub num_rand_vs: u32,
+    pub num_rand_vs: usize,
     /// Total Rho GTPase "fraction" compared to "baseline" fraction of Rho GTPase activity.
     /// 0.05 = "halfmax level of Rho GTPase"
     /// 1.0 = " total amount"
@@ -442,7 +441,7 @@ impl RawParameters {
             self.cell_diam.mul_number((PI / (NVERTS as f32)).sin());
         let ra = Length(1.0)
             .pow(2.0)
-            .mul_number(calc_init_cell_area(cell_r.number()));
+            .mul_number(calc_init_cell_area(cell_r.number(), NVERTS));
         let const_protrusive =
             (self.lm_h.g() * self.lm_ss.g() * rel.g())
                 .mul_number(self.halfmax_rgtp_max_f_frac);
@@ -499,7 +498,7 @@ impl RawParameters {
             rand_avg_t: bq.normalize(&self.rand_avg_t).ceil(),
             rand_std_t: bq.normalize(&self.rand_std_t).ceil(),
             rand_mag: self.rand_mag,
-            num_rand_vs: (self.rand_vs * NVERTS as f32) as u32,
+            num_rand_vs: (self.rand_vs * NVERTS as f32) as usize,
             total_rgtp: 1.0 / bq.frac_rgtp,
         }
     }

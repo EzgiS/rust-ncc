@@ -7,7 +7,7 @@ use crate::cell::mechanics::{
     calc_cyto_forces, calc_edge_forces, calc_edge_vecs,
     calc_rgtp_forces,
 };
-use crate::interactions::{Interactions, RelativeRgtpActivity};
+use crate::interactions::{CellInteractions, RelativeRgtpActivity};
 use crate::math::v2d::V2D;
 use crate::math::{hill_function3, max_f32, min_f32};
 use crate::parameters::{Parameters, WorldParameters};
@@ -22,20 +22,18 @@ use std::ops::{Add, Div, Mul, Sub};
 /// geometric updates. That is, they are modelled using ODEs which
 /// are then integrated using either the Euler method or
 /// Runge-Kutta Dormand-Prince 5 (Matlab's `ode45`).
-#[derive(
-    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq,
-)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct CoreState {
     /// Polygon representing cell shape.
     pub poly: [V2D; NVERTS],
     /// Fraction of Rac1 active at each vertex.
-    pub rac_acts: [f32; NVERTS],
+    rac_acts: [f32; NVERTS],
     /// Fraction of Rac1 inactive at each vertex.
-    pub rac_inacts: [f32; NVERTS],
+    rac_inacts: [f32; NVERTS],
     /// Fraction of RhoA active at each vertex.
-    pub rho_acts: [f32; NVERTS],
+    rho_acts: [f32; NVERTS],
     /// Fraction of RhoA inactive at each vertex.
-    pub rho_inacts: [f32; NVERTS],
+    rho_inacts: [f32; NVERTS],
 }
 
 impl Add for CoreState {
@@ -151,9 +149,7 @@ impl Mul<CoreState> for f32 {
 }
 
 /// Records the mechanical state of a cell.
-#[derive(
-    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq,
-)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct MechState {
     /// Strain each edge is under, where resting edge length is
     /// defined in the cell's parameters.
@@ -169,7 +165,7 @@ pub struct MechState {
     pub avg_tens_strain: f32,
     /// Sum of all forces that are acting on a vertex, except for
     /// adhesion, which comes from interaction information.
-    pub sum_forces: [V2D; NVERTS],
+    pub sum_fs: [V2D; NVERTS],
 }
 
 /// Calculates the various rates necessary to define the ODEs
@@ -184,9 +180,7 @@ pub struct MechState {
 ///     * `x_tens`: "tension" factor that affects Rac1 activation
 /// rate, calculated based on average tensile strain in cell (i.e.
 /// how stretched the cell is).
-#[derive(
-    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq,
-)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ChemState {
     pub kdgtps_rac: [f32; NVERTS],
     pub kgtps_rac: [f32; NVERTS],
@@ -201,9 +195,7 @@ pub struct ChemState {
     pub x_tens: f32,
 }
 
-#[derive(
-    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq,
-)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct GeomState {
     /// Unit edge vectors which point from position of vertex `vi`
     /// to position of vertex `vi + 1`, where `vi + 1` is calculated
@@ -267,7 +259,7 @@ impl Display for MechState {
         writeln!(f, "avg_tens_strain: {}", self.avg_tens_strain)?;
         fmt_var_arr(f, "edge_forces", &self.edge_forces)?;
         fmt_var_arr(f, "cyto_forces", &self.cyto_forces)?;
-        fmt_var_arr(f, "tot_forces", &self.sum_forces)
+        fmt_var_arr(f, "tot_forces", &self.sum_fs)
     }
 }
 
@@ -294,8 +286,8 @@ impl CoreState {
     /// Calculate the total number of variables that `CoreState`
     /// holds. That is: the number of variables per vertex, times the
     /// number of all the vertices in a cell.
-    pub fn num_vars() -> u32 {
-        (NVERTS * 6) as u32
+    pub fn num_vars() -> usize {
+        (NVERTS * 6) as usize
     }
 
     pub fn calc_geom_state(&self) -> GeomState {
@@ -312,7 +304,7 @@ impl CoreState {
         // into the polygon and bisects the angle
         let mut uivs = [V2D::default(); NVERTS];
         (0..NVERTS).for_each(|i| {
-            let im1 = circ_ix_minus(i, NVERTS);
+            let im1 = circ_ix_minus(i as usize, NVERTS);
             let tangent = (uevs[i] + uevs[im1]).unitize();
             uivs[i] = tangent.normal();
         });
@@ -376,7 +368,7 @@ impl CoreState {
         (0..NVERTS).for_each(|i| {
             sum_fs[i] =
                 rgtp_forces[i] + cyto_forces[i] + edge_forces[i]
-                    - edge_forces[circ_ix_minus(i, NVERTS)];
+                    - edge_forces[circ_ix_minus(i as usize, NVERTS)];
         });
         MechState {
             edge_strains,
@@ -384,7 +376,7 @@ impl CoreState {
             cyto_forces,
             edge_forces,
             avg_tens_strain,
-            sum_forces: sum_fs,
+            sum_fs,
         }
     }
 
@@ -393,7 +385,7 @@ impl CoreState {
         geom_state: &GeomState,
         mech_state: &MechState,
         rac_rand_state: &RacRandState,
-        inter_state: &Interactions,
+        inter_state: &CellInteractions,
         parameters: &Parameters,
     ) -> ChemState {
         let GeomState { edge_lens, .. } = geom_state;
@@ -404,7 +396,7 @@ impl CoreState {
         // by the edges that meet at that vertex.
         let mut avg_edge_lens: [f32; NVERTS] = [0.0_f32; NVERTS];
         (0..NVERTS).for_each(|i| {
-            let im1 = circ_ix_minus(i, NVERTS);
+            let im1 = circ_ix_minus(i as usize, NVERTS);
             avg_edge_lens[i] = (edge_lens[i] + edge_lens[im1]) / 2.0;
         });
 
@@ -515,7 +507,7 @@ impl CoreState {
     pub fn dynamics_f(
         state: &CoreState,
         rac_rand_state: &RacRandState,
-        inter_state: &Interactions,
+        inter_state: &CellInteractions,
         world_parameters: &WorldParameters,
         parameters: &Parameters,
     ) -> CoreState {
@@ -577,7 +569,7 @@ impl CoreState {
                 + vertex_rho_inact_flux
                 - delta_rho_activated;
             delta.poly[i] = (1.0 / world_parameters.vertex_eta)
-                * (mech_state.sum_forces[i] + inter_state.x_adhs[i]);
+                * (mech_state.sum_fs[i] + inter_state.x_adhs[i]);
         }
         delta
     }

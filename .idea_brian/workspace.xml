@@ -13,11 +13,16 @@
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
-    <cargoProject FILE="$PROJECT_DIR$/avro-test/Cargo.toml" />
     <cargoProject FILE="$PROJECT_DIR$/playground/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6e867186-6d46-442a-9050-0ad2ade12596" name="Default Changelist" comment="">
+<<<<<<< HEAD:.idea/workspace.xml
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/rust-ncc.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/rust-ncc.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/probe.py" beforeDir="false" afterPath="$PROJECT_DIR$/output/probe.py" afterDir="false" />
+=======
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output/probe.py" beforeDir="false" afterPath="$PROJECT_DIR$/output/probe.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cell/core_state.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/cell/core_state.rs" afterDir="false" />
@@ -29,6 +34,7 @@
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/parameters/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/parameters/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/mod.rs" afterDir="false" />
+>>>>>>> brian/master:.idea_brian/workspace.xml
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,8 +77,9 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../nannou" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/experiments" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+    <property name="org.rust.disableDetachedFileInspection/Users/ezgisoylemezoglu/Documents/GitHub/rust-ncc/src/interactions/gen_phys.rs" value="true" />
     <property name="org.rust.disableDetachedFileInspectionB:/rust-ncc/avro-test/src/macro_out.rs" value="true" />
     <property name="org.rust.disableDetachedFileInspectionB:/rust-ncc/playground/src/main.rs" value="true" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
@@ -87,9 +94,9 @@
       <recent name="B:\rust-ncc\src\utils" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Rel+A">
-    <configuration name="B-Dbg-V" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="build --features &quot;validate&quot;" />
+  <component name="RunManager" selected="Cargo.Rel">
+    <configuration name="B-V+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="build --features &quot;validation, animate&quot;" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
@@ -102,8 +109,8 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="B-Dbg-V+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="build --features &quot;validate, animate&quot;" />
+    <configuration name="B-Valid" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="build --features &quot;validation&quot;" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
@@ -116,63 +123,7 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Dbg" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Dbg+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --features &quot;animate&quot;" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Dbg+V" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --features &quot;validate&quot;" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Dbg+V+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --features &quot;validate, animate&quot;" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Expand avro_test [avro-test]" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+    <configuration name="Expand avro_test [avro-test]" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="expand --bin avro-test --color=always --theme=GitHub --tests" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/avro-test" />
       <option name="channel" value="DEFAULT" />
@@ -214,36 +165,22 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="RelValid" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run --release --features &quot;validation&quot;" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Rel+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --release --features &quot;animate&quot;" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Rel+V" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --release --features &quot;validate&quot;" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="channel" value="DEFAULT" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Rel+V+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --release --all-features" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
@@ -284,6 +221,34 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="V" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run --features &quot;validation&quot;" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="V+A" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run --features &quot;validation, animate&quot;" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="avro-test" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/avro-test" />
@@ -302,10 +267,14 @@
       <module name="rust-ncc" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+<<<<<<< HEAD:.idea/workspace.xml
+      <option name="SDK_HOME" value="$USER_HOME$/.conda/envs/rust-ncc/bin/python" />
+=======
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="A:\Anaconda\envs\rust-ncc\python.exe" />
+>>>>>>> brian/master:.idea_brian/workspace.xml
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/output" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -320,18 +289,15 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Cargo.B-Dbg-V" />
-      <item itemvalue="Cargo.B-Dbg-V+A" />
-      <item itemvalue="Cargo.Dbg" />
-      <item itemvalue="Cargo.Dbg+A" />
-      <item itemvalue="Cargo.Dbg+V" />
-      <item itemvalue="Cargo.Dbg+V+A" />
-      <item itemvalue="Cargo.Expand avro_test [avro-test]" />
+      <item itemvalue="Cargo.B-Valid" />
+      <item itemvalue="Cargo.B-V+A" />
+      <item itemvalue="Cargo.V" />
+      <item itemvalue="Cargo.V+A" />
       <item itemvalue="Cargo.Playground" />
+      <item itemvalue="Cargo.RelValid" />
       <item itemvalue="Cargo.Rel" />
       <item itemvalue="Cargo.Rel+A" />
-      <item itemvalue="Cargo.Rel+V" />
-      <item itemvalue="Cargo.Rel+V+A" />
+      <item itemvalue="Cargo.Expand avro_test [avro-test]" />
       <item itemvalue="Cargo.Run avro-test" />
       <item itemvalue="Cargo.Run playground" />
       <item itemvalue="Cargo.avro-test" />
@@ -342,7 +308,6 @@
         <item itemvalue="Python.probe" />
         <item itemvalue="Cargo.Run playground" />
         <item itemvalue="Cargo.Run avro-test" />
-        <item itemvalue="Cargo.Expand avro_test [avro-test]" />
         <item itemvalue="Cargo.avro-test" />
       </list>
     </recent_temporary>
@@ -351,11 +316,25 @@
     <option name="externalLinter" value="Clippy" />
     <option name="runExternalLinterOnTheFly" value="true" />
     <option name="runRustfmtOnSave" value="true" />
-    <option name="toolchainHomeDirectory" value="A:/rust/cargo/bin" />
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
     <option name="useRustfmt" value="true" />
     <option name="version" value="2" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6e867186-6d46-442a-9050-0ad2ade12596" name="Default Changelist" comment="" />
+      <created>1610125378121</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1610125378121</updated>
+      <workItem from="1610125380910" duration="2000000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -380,10 +359,18 @@
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <dependency id="0" />
           <url>file://$PROJECT_DIR$/src/world/mod.rs</url>
+<<<<<<< HEAD:.idea/workspace.xml
+          <line>327</line>
+=======
           <line>296</line>
+>>>>>>> brian/master:.idea_brian/workspace.xml
           <option name="timeStamp" value="60" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

@@ -20,11 +20,11 @@ use rand::SeedableRng;
 
 /// Generate the group layout to use for this experiment.
 fn group_layout(
-    num_cells: u32,
+    num_cells: usize,
     char_quants: &CharQuantities,
     bottom_left: (Length, Length),
-    width: u32,
-    height: u32,
+    width: usize,
+    height: usize,
 ) -> Result<GroupBBox, String> {
     // specify initial location of group bottom left
     let bottom_left = V2D {

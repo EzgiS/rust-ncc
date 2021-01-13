@@ -6,7 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::cell::states::fmt_var_arr;
+use crate::cell::core_state::fmt_var_arr;
 use crate::math::hill_function3;
 use crate::parameters::Parameters;
 use crate::utils::normal::NormalDistrib;
@@ -24,7 +24,7 @@ pub enum DistributionType {
     /// Distribute Rho GTPase randomly over all vertices.
     Random,
     /// Mark vertices `true` if Rho GTPase is to be placed there.
-    Specific([bool; NVERTS]),
+    Specific([bool; NVERTS as usize]),
 }
 
 pub struct DistributionScheme {
@@ -38,15 +38,18 @@ impl DistributionScheme {
     /// if we now sum up everything in the new array, sum = 1.0
     fn scaled_unitize(
         frac: f32,
-        mut distrib: [f32; NVERTS],
-    ) -> [f32; NVERTS] {
+        mut distrib: [f32; NVERTS as usize],
+    ) -> [f32; NVERTS as usize] {
         let sum: f32 = distrib.iter().sum();
         distrib.iter_mut().for_each(|e| *e = *e * frac / sum);
         distrib
     }
 
-    fn gen_random(rng: &mut Pcg32, frac: f32) -> [f32; NVERTS] {
-        let mut r = [0.0; NVERTS];
+    fn gen_random(
+        rng: &mut Pcg32,
+        frac: f32,
+    ) -> [f32; NVERTS as usize] {
+        let mut r = [0.0; NVERTS as usize];
         let prob_distrib: Uniform<f32> =
             Uniform::new_inclusive(0.0, 1.0);
         r.iter_mut().for_each(|e| {
@@ -57,10 +60,10 @@ impl DistributionScheme {
 
     fn gen_specific(
         frac: f32,
-        marked_verts: &[bool; NVERTS],
-    ) -> [f32; NVERTS] {
+        marked_verts: &[bool; NVERTS as usize],
+    ) -> [f32; NVERTS as usize] {
         //println!("marking in gen_specific: {:?}", &marked_verts);
-        let mut r = [0.0; NVERTS];
+        let mut r = [0.0; NVERTS as usize];
         marked_verts.iter().zip(r.iter_mut()).for_each(
             |(&marked, e)| {
                 if marked {
@@ -85,8 +88,8 @@ impl DistributionScheme {
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct RgtpDistribution {
-    pub active: [f32; NVERTS],
-    pub inactive: [f32; NVERTS],
+    pub active: [f32; NVERTS as usize],
+    pub inactive: [f32; NVERTS as usize],
 }
 
 impl RgtpDistribution {
@@ -265,11 +268,11 @@ pub fn calc_kdgtps_rho(
     kdgtps_rho
 }
 
-#[derive(Copy, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Copy, Clone, Deserialize, Serialize)]
 pub struct RacRandState {
     pub enabled: bool,
     /// When does the next update occur?
-    pub next_update: u32,
+    pub next_update: usize,
     /// Rac1 randomization factors per vertex.
     pub x_rands: [f32; NVERTS],
     distrib: NormalDistrib,
@@ -295,7 +298,7 @@ impl RacRandState {
         let ut = Uniform::from(0.0..parameters.rand_avg_t);
         RacRandState {
             enabled: true,
-            next_update: ut.sample(rng).floor() as u32,
+            next_update: ut.sample(rng).floor() as usize,
             x_rands: Self::gen_rand_factors(
                 rng,
                 parameters.num_rand_vs as usize,
@@ -310,17 +313,17 @@ impl RacRandState {
 
     pub fn update(
         &self,
-        tstep: u32,
+        tstep: usize,
         rng: &mut Pcg32,
         parameters: &Parameters,
     ) -> RacRandState {
         if tstep == self.next_update && self.enabled {
             let next_update =
-                tstep + self.distrib.sample(rng).floor() as u32;
+                tstep + self.distrib.sample(rng).floor() as usize;
             // println!("random update from {} to {}", tstep, next_update);
             let x_rands = Self::gen_rand_factors(
                 rng,
-                parameters.num_rand_vs as usize,
+                parameters.num_rand_vs,
                 parameters.rand_mag,
             );
             // println!("{:?}", x_rands);
