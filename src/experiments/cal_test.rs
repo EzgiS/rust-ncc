@@ -89,7 +89,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(1.2));
+        (Length(0.0), raw_params1.cell_diam.mul_number(1.3));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -138,7 +138,7 @@ fn raw_world_parameters(
                     10.0,
                 )),
                 cal_mag: Some(60.0),
-                cil_mag: 60.0,
+                cil_mag: 30.0,
             },
         },
     }
@@ -179,7 +179,7 @@ fn gen_default_raw_params_0(
 
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
-            frac: 0.05,
+            frac: 0.03,
             ty: DistributionType::Specific(marked_rac),
         },
         DistributionScheme {
@@ -196,7 +196,7 @@ fn gen_default_raw_params_0(
             ty: DistributionType::Specific(marked_rho),
         },
         DistributionScheme {
-            frac: 0.0,
+            frac: 0.1,
             ty: DistributionType::Random,
         },
         rng,
@@ -266,7 +266,7 @@ fn gen_default_raw_params_1(
             ty: DistributionType::Specific(marked_rho),
         },
         DistributionScheme {
-            frac: 0.0,
+            frac: 0.1,
             ty: DistributionType::Random,
         },
         rng,
