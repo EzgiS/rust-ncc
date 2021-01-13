@@ -53,7 +53,7 @@ impl RelativeRgtpActivity {
         if value > 0.0 {
             RacDominant(value)
         } else {
-            RhoDominant(value)
+            RhoDominant(-1.0*value)
         }
     }
 
@@ -86,7 +86,6 @@ pub struct CellInteractions {
 pub struct InteractionGenerator {
     /// Vertex coordinates, per cell, for all cells in the simulation.
     cell_polys: Vec<Poly>,
-    all_rgtps: Vec<[RelativeRgtpActivity; NVERTS]>,
     /// Generates CIL/CAL related interaction information. In other
     /// words, interactions that require cells to engage in physical
     /// contact.
@@ -104,7 +103,6 @@ pub struct ContactData {
 impl InteractionGenerator {
     pub fn new(
         cell_verts: &[[V2D; NVERTS]],
-        cell_rgtps: &[[RelativeRgtpActivity; NVERTS]],
         params: InteractionParams,
     ) -> InteractionGenerator {
         let cell_polys = cell_verts
@@ -124,7 +122,6 @@ impl InteractionGenerator {
             params.bdry.map(BdryEffectGenerator::new);
         InteractionGenerator {
             cell_polys: cell_polys.iter().copied().collect(),
-            all_rgtps: cell_rgtps.iter().copied().collect(),
             phys_contact_generator,
             coa_generator,
             chem_attr_generator,
@@ -155,11 +152,11 @@ impl InteractionGenerator {
         );
     }
 
-    pub fn generate(&self) -> Vec<CellInteractions> {
+    pub fn generate(&self, relative_rgtps: Vec<[RelativeRgtpActivity; NVERTS]>) -> Vec<CellInteractions> {
         let num_cells = self.cell_polys.len();
         let PhysContactFactors { adh, cil, cal } = self
             .phys_contact_generator
-            .generate(self.all_rgtps.as_slice());
+            .generate(relative_rgtps.as_slice());
         let r_coas = self
             .coa_generator
             .as_ref()
