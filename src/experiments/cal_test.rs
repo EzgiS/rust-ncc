@@ -89,7 +89,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(1.3));
+        (Length(0.0), raw_params1.cell_diam.mul_number(1.1));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -133,12 +133,13 @@ fn raw_world_parameters(
                     one_at.mul_number(2.0),
                     one_at,
                 ),
+                // adh_mag: None,
                 adh_mag: Some(gen_default_adhesion_mag(
                     char_quants,
                     10.0,
                 )),
-                cal_mag: Some(60.0),
-                cil_mag: 30.0,
+                cal_mag: Some(10.0),
+                cil_mag: 10.0,
             },
         },
     }
