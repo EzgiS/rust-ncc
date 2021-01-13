@@ -114,6 +114,7 @@ fn gen_cil_mat() -> SymCcDat<f32> {
 /// Generate raw world parameters, in particular, how
 /// cells interact with each other, and any boundaries.
 fn raw_world_parameters(
+    coa_mag: Option<f32>,
     char_quants: &CharQuantities,
 ) -> RawWorldParameters {
     // Some(RawCoaParams {
@@ -122,10 +123,11 @@ fn raw_world_parameters(
     //     mag: 100.0,
     // })
     let one_at = gen_default_phys_contact_dist();
+    let coa = RawCoaParams::default_with_mag(coa_mag);
     RawWorldParameters {
         vertex_eta: gen_default_viscosity(),
         interactions: RawInteractionParams {
-            coa: None,
+            coa,
             chem_attr: None,
             bdry: None,
             phys_contact: RawPhysicalContactParams {
@@ -138,7 +140,7 @@ fn raw_world_parameters(
                     char_quants,
                     10.0,
                 )),
-                cal_mag: Some(10.0),
+                cal_mag: None,
                 cil_mag: 10.0,
             },
         },
@@ -151,12 +153,35 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         Some(s) => Pcg32::seed_from_u64(s),
         None => Pcg32::from_entropy(),
     };
+    let cil = 10.0;
+    let cal: Option<f32> = None;
+    let adh = Some(10.0);
+    let coa: Option<f32> = None;
+
     let char_quants = gen_default_char_quants();
     let world_parameters =
-        raw_world_parameters(&char_quants).refine(&char_quants);
+        raw_world_parameters(None, &char_quants).refine(&char_quants);
     let cell_groups = cell_groups(&mut rng, &char_quants);
+
+    //convert the option into string
+    let cal = if let Some(i) = cal {
+        i.to_string()
+    } else {
+        "None".to_string()
+    };
+
+    let adh = if let Some(i) = adh {
+        i.to_string()
+    } else {
+        "None".to_string()
+    };
+
     Experiment {
-        file_name: "cal_test".to_string(),
+        file_name: format!(
+            "cal_test_cil={}_cal={}_adh={}",
+            cil, cal, adh
+        ),
+        //format!("cal_test_cil={}_cal={}_adh={}_coa={}", cil, cal, adh, coa);
         char_quants,
         world_parameters,
         cell_groups,

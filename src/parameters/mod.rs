@@ -109,6 +109,19 @@ impl RawCoaParams {
             distrib_exp: 0.5f32.ln() / (0.5 * range),
         }
     }
+
+    pub fn default_with_mag(
+        coa_mag: Option<f32>,
+    ) -> Option<RawCoaParams> {
+        match coa_mag {
+            None => None,
+            Some(i) => Some(RawCoaParams {
+                los_penalty: 2.0,
+                range: Length(100.0).micro(),
+                mag: i,
+            }),
+        }
+    }
 }
 
 #[derive(Clone)]
