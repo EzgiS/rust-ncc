@@ -140,7 +140,7 @@ fn raw_world_parameters(
                     char_quants,
                     10.0,
                 )),
-                cal_mag: None,
+                cal_mag: Some(10.0),
                 cil_mag: 10.0,
             },
         },
@@ -154,7 +154,7 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         None => Pcg32::from_entropy(),
     };
     let cil = 10.0;
-    let cal: Option<f32> = None;
+    let cal: Option<f32> = Some(10.0);
     let adh = Some(10.0);
     let coa: Option<f32> = None;
 
@@ -176,12 +176,21 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         "None".to_string()
     };
 
+    let coa = if let Some(i) = coa {
+        i.to_string()
+    } else {
+        "None".to_string()
+    };
+
     Experiment {
+        // file_name: format!(
+        //     "cal_test_cil={}_cal={}_adh={}",
+        //     cil, cal, adh
+        // ),
         file_name: format!(
-            "cal_test_cil={}_cal={}_adh={}",
-            cil, cal, adh
+            "cal_test_cil={}_cal={}_adh={}_coa={}",
+            cil, cal, adh, coa
         ),
-        //format!("cal_test_cil={}_cal={}_adh={}_coa={}", cil, cal, adh, coa);
         char_quants,
         world_parameters,
         cell_groups,

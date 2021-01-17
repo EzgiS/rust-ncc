@@ -91,14 +91,14 @@ impl Cells {
             cell_states: new_cell_states,
             interactions: interaction_generator.generate(rel_rgtps),
         };
-        let adh_0_4 = cells.interactions[0].x_adhs[4];
-        let adh_1_12 = cells.interactions[1].x_adhs[12];
-
-        if adh_0_4.mag() > 0.0 || adh_1_12.mag() > 0.0 {
-            println!("tstep: {}", tstep);
-            println!("({:?}) ci 0 4 cal: {}", cells.cell_states[0].core.calc_relative_rgtp_activity(&group_parameters[0])[4], cells.interactions[0].x_cals[4]);
-            println!("({:?}) ci 1 12 cal: {}", cells.cell_states[1].core.calc_relative_rgtp_activity(&group_parameters[1])[12], cells.interactions[1].x_cals[12]);
-        }
+        // let adh_0_4 = cells.interactions[0].x_adhs[4];
+        // let adh_1_12 = cells.interactions[1].x_adhs[12];
+        //
+        // if adh_0_4.mag() > 0.0 || adh_1_12.mag() > 0.0 {
+        // println!("tstep: {}", tstep);
+        // println!("({:?}) ci 0 4 cal: {}", cells.cell_states[0].core.calc_relative_rgtp_activity(&group_parameters[0])[4], cells.interactions[0].x_cals[4]);
+        // println!("({:?}) ci 1 12 cal: {}", cells.cell_states[1].core.calc_relative_rgtp_activity(&group_parameters[1])[12], cells.interactions[1].x_cals[12]);
+        // }
 
         Ok(cells)
     }
@@ -203,7 +203,8 @@ impl World {
             world_params.interactions.clone(),
         );
         // Generate initial cell interactions.
-        let cell_interactions = interaction_generator.generate(cell_rgtps);
+        let cell_interactions =
+            interaction_generator.generate(cell_rgtps);
         // Create `Cell` structures to represent each cell, and the random number generator associated per cell.
         let mut cell_states = vec![];
         for (cell_ix, group_ix) in
