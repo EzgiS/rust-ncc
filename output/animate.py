@@ -7,7 +7,6 @@ from matplotlib import animation
 
 output = None
 
-# pick your file name input
 file_name = "history_separated_pair_cil=60_cal=None_adh=13_coa=24_seed=4454.cbor"
 
 with open(file_name, mode='rb') as sf:
@@ -69,6 +68,7 @@ def extract_scalars(state_key, dat_key, state_recs):
 
 
 poly_per_cell_per_tstep = extract_p2ds_from_cell_states('core', 'poly', state_recs)
+centroids_per_cell_per_tstep = np.array([[np.average(poly, axis=0) for poly in poly_per_cell] for poly_per_cell in poly_per_cell_per_tstep])
 uivs_per_cell_per_tstep = extract_p2ds_from_cell_states('geom', 'unit_inward_vecs',
                                                         state_recs)
 uovs_per_cell_per_tstep = -1 * uivs_per_cell_per_tstep
@@ -145,20 +145,35 @@ adhs_per_cell_per_tstep = 11*extract_p2ds_from_interactions('x_adhs', state_recs
 # rgtp_forces_per_tstep = np.array(rgtp_forces_per_tstep)
 
 circ_vixs = np.take(np.arange(16), np.arange(17), mode='wrap')
-
+centroid_trails_per_cell_per_tstep = np.zeros(shape=(len(tsteps), len(poly_per_cell_per_tstep[0]), 2))
 
 def paint(tstep_ix, fig, ax):
+    global centroid_trails
     old_xlim = ax.get_xlim()
     old_ylim = ax.get_ylim()
     ax.cla()
-    ax.set_xlim(old_xlim)
-    ax.set_ylim(old_ylim)
+    # ax.set_xlim(old_xlim)
+    # ax.set_ylim(old_ylim)
+    ax.relim()
+
+
+    # bbox to control ax.relim
+    centroid = np.average(centroids_per_cell_per_tstep[tstep_ix], axis=0)
+    (xmin, xmax) = [centroid[0] - DEFAULT_BBOX_LIM[0] * 0.5, centroid[0] + DEFAULT_BBOX_LIM[0] * 0.5]
+    (ymin, ymax) = [centroid[1] - DEFAULT_BBOX_LIM[1] * 0.5, centroid[1] + DEFAULT_BBOX_LIM[1] * 0.5]
+    bbox = np.array([[xmin, ymin], [xmin, ymax], [xmax, ymax], [xmax, ymin], [xmin, ymin]])
+    ax.plot(bbox[:,0], bbox[:,1], color=(0.0, 0.0, 0.0, 0.0))
 
     for (ci, poly) in enumerate(poly_per_cell_per_tstep[tstep_ix]):
         if ci == 0:
             poly_color = "k"
+            centroid_trail_color = (140/255, 114/255, 114/255)
         else:
             poly_color = "g"
+            centroid_trail_color = (127/255, 191/255, 63/255)
+
+        #this_cell_centroids = centroids_per_cell_per_tstep[:tstep_ix, ci]
+        #ax.plot(this_cell_centroids[:,0], this_cell_centroids[:,1], color=centroid_trail_color)
 
         for vix in range(16):
             ax.plot([poly[vix, 0], poly[(vix + 1) % 16, 0]],
@@ -215,6 +230,7 @@ def paint(tstep_ix, fig, ax):
 
 DEFAULT_XLIM = [-40, 200]
 DEFAULT_YLIM = [-40, 200]
+DEFAULT_BBOX_LIM = [DEFAULT_XLIM[1] - DEFAULT_XLIM[0], DEFAULT_YLIM[1] - DEFAULT_YLIM[0]]
 num_tsteps = poly_per_cell_per_tstep.shape[0]
 tstep_ix = 0
 fig, ax = plt.subplots()
@@ -222,12 +238,12 @@ ax.set_aspect('equal')
 ax.set_xlim(DEFAULT_XLIM)
 ax.set_ylim(DEFAULT_YLIM)
 # fig.canvas.mpl_connect('key_press_event', on_press)
-tstep_ixs = [n for n in range(len(tsteps))]
+tstep_ixs = [n for n in range(int(len(tsteps)))]
 # Set up formatting for the movie files
 Writer = animation.writers['ffmpeg']
-writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+writer = Writer(fps=10, metadata=dict(artist='Me'), bitrate=1800)
 
-cell_ani = animation.FuncAnimation(fig, paint, fargs=(fig, ax),
-                                   interval=100, blit=True)
+cell_ani = animation.FuncAnimation(fig, paint, frames=tstep_ixs, fargs=(fig, ax),
+                                   interval=1, blit=True)
 # name relevant to what you want your experiment title
 cell_ani.save('separated_pair_cil=60_cal=None_adh=13_coa=24_seed=4454.mp4', writer=writer)
