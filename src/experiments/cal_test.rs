@@ -215,7 +215,7 @@ fn gen_default_raw_params_0(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.03,
-            ty: DistributionType::Specific(marked_rac),
+            ty: DistributionType::SpecificUniform(marked_rac),
         },
         DistributionScheme {
             frac: 0.1,
@@ -228,7 +228,7 @@ fn gen_default_raw_params_0(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rho),
+            ty: DistributionType::SpecificUniform(marked_rho),
         },
         DistributionScheme {
             frac: 0.1,
@@ -285,7 +285,7 @@ fn gen_default_raw_params_1(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rac),
+            ty: DistributionType::SpecificUniform(marked_rac),
         },
         DistributionScheme {
             frac: 0.1,
@@ -298,7 +298,7 @@ fn gen_default_raw_params_1(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rho),
+            ty: DistributionType::SpecificUniform(marked_rho),
         },
         DistributionScheme {
             frac: 0.1,

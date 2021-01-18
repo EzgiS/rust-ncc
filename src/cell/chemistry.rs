@@ -24,7 +24,8 @@ pub enum DistributionType {
     /// Distribute Rho GTPase randomly over all vertices.
     Random,
     /// Mark vertices `true` if Rho GTPase is to be placed there.
-    Specific([bool; NVERTS as usize]),
+    SpecificUniform([bool; NVERTS as usize]),
+    SpecificRandom([bool; NVERTS as usize]),
 }
 
 pub struct DistributionScheme {
@@ -58,7 +59,7 @@ impl DistributionScheme {
         Self::scaled_unitize(frac, r)
     }
 
-    fn gen_specific(
+    fn gen_specific_uniform(
         frac: f32,
         marked_verts: &[bool; NVERTS as usize],
     ) -> [f32; NVERTS as usize] {
@@ -73,14 +74,35 @@ impl DistributionScheme {
         );
         Self::scaled_unitize(frac, r)
     }
+    fn gen_specific_random(
+        rng: &mut Pcg32,
+        frac: f32,
+        marked_verts: &[bool; NVERTS as usize],
+    ) -> [f32; NVERTS as usize] {
+        //println!("marking in gen_specific: {:?}", &marked_verts);
+        let mut r = [0.0; NVERTS as usize];
+        let prob_distrib: Uniform<f32> =
+            Uniform::new_inclusive(0.0, 1.0);
+        marked_verts.iter().zip(r.iter_mut()).for_each(
+            |(&marked, e)| {
+                if marked {
+                    *e = rng.sample(prob_distrib);
+                }
+            },
+        );
+        Self::scaled_unitize(frac, r)
+    }
 
     pub fn generate(&self, rng: &mut Pcg32) -> [f32; NVERTS] {
         match &self.ty {
             DistributionType::Random => {
                 Self::gen_random(rng, self.frac)
             }
-            DistributionType::Specific(marks) => {
-                Self::gen_specific(self.frac, marks)
+            DistributionType::SpecificUniform(marks) => {
+                Self::gen_specific_uniform(self.frac, marks)
+            }
+            DistributionType::SpecificRandom(marks) => {
+                Self::gen_specific_random(rng, self.frac, marks)
             }
         }
     }

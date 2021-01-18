@@ -64,13 +64,13 @@ fn cell_groups(
     ];
     let raw_params0 = gen_default_raw_params(
         rng,
-        false,
+        true,
         group0_marked,
         group1_marked,
     );
     let raw_params1 = gen_default_raw_params(
         rng,
-        false,
+        true,
         group1_marked,
         group0_marked,
     );
@@ -209,7 +209,7 @@ fn gen_default_raw_params(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rac),
+            ty: DistributionType::SpecificRandom(marked_rac),
         },
         DistributionScheme {
             frac: 0.1,
@@ -222,7 +222,7 @@ fn gen_default_raw_params(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rho),
+            ty: DistributionType::SpecificRandom(marked_rho),
         },
         DistributionScheme {
             frac: 0.1,

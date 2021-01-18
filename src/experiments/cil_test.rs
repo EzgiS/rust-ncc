@@ -55,12 +55,12 @@ fn cell_groups(
     cq: &CharQuantities,
 ) -> Vec<CellGroup> {
     let group0_marked = [
-        false, true, true, true, true, true, true, true, false,
+        true, true, true, true, true, true, true, false, false,
         false, false, false, false, false, false, false,
     ];
     let group1_marked = [
-        false, false, false, false, false, false, false, false,
-        false, true, true, true, true, true, true, true,
+        false, false, false, false, false, false, false, false, true,
+        true, true, true, true, true, true, false,
     ];
     let raw_params0 = gen_default_raw_params(
         rng,
@@ -85,7 +85,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(1.0));
+        (Length(0.0), raw_params1.cell_diam.mul_number(2.0));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -131,7 +131,7 @@ fn raw_world_parameters(
                 ),
                 adh_mag: None,
                 cal_mag: None,
-                cil_mag: 60.0,
+                cil_mag: 80.0,
             },
         },
     }
@@ -173,7 +173,7 @@ fn gen_default_raw_params(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rac),
+            ty: DistributionType::SpecificUniform(marked_rac),
         },
         DistributionScheme {
             frac: 0.1,
@@ -186,10 +186,10 @@ fn gen_default_raw_params(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Specific(marked_rho),
+            ty: DistributionType::SpecificUniform(marked_rho),
         },
         DistributionScheme {
-            frac: 0.0,
+            frac: 0.1,
             ty: DistributionType::Random,
         },
         rng,
