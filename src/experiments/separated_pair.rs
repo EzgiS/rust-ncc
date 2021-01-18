@@ -64,13 +64,13 @@ fn cell_groups(
     ];
     let raw_params0 = gen_default_raw_params(
         rng,
-        true,
+        false,
         group0_marked,
         group1_marked,
     );
     let raw_params1 = gen_default_raw_params(
         rng,
-        true,
+        false,
         group1_marked,
         group0_marked,
     );
@@ -199,7 +199,7 @@ fn gen_default_raw_params(
     marked_rac: [bool; NVERTS],
     marked_rho: [bool; NVERTS],
 ) -> RawParameters {
-    //println!("marking: {:?}", &marked_rac);
+    // println!("marking: {:?}", &marked_rac);
 
     let rgtp_d = (Length(0.1_f32.sqrt()).micro().pow(2.0).g()
         / Time(1.0).g())
