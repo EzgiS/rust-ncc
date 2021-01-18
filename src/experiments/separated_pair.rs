@@ -111,6 +111,9 @@ fn gen_cil_mat() -> SymCcDat<f32> {
 /// cells interact with each other, and any boundaries.
 fn raw_world_parameters(
     coa_mag: Option<f32>,
+    adh_mag: Option<f32>,
+    cal_mag: Option<f32>,
+    cil_mag: f32,
     char_quants: &CharQuantities,
 ) -> RawWorldParameters {
     // Some(RawCoaParams {
@@ -120,6 +123,11 @@ fn raw_world_parameters(
     // })
     let one_at = gen_default_phys_contact_dist();
     let coa = RawCoaParams::default_with_mag(coa_mag);
+    let adh_mag = if let Some(x) = adh_mag {
+        Some(gen_default_adhesion_mag(char_quants, x))
+    } else {
+        None
+    };
     RawWorldParameters {
         vertex_eta: gen_default_viscosity(),
         interactions: RawInteractionParams {
@@ -131,13 +139,9 @@ fn raw_world_parameters(
                     one_at.mul_number(2.0),
                     one_at,
                 ),
-                adh_mag: None,
-                // Some(gen_default_adhesion_mag(
-                //     char_quants,
-                //     10.0,
-                // )),
-                cal_mag: None,
-                cil_mag: 60.0,
+                adh_mag,
+                cal_mag,
+                cil_mag,
             },
         },
     }
@@ -149,15 +153,14 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         Some(s) => Pcg32::seed_from_u64(s),
         None => Pcg32::from_entropy(),
     };
-
     let cil = 60.0;
     let cal: Option<f32> = None;
-    let adh: Option<f32> = None;
+    let adh: Option<f32> = Some(13.0);
     let coa: Option<f32> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
     let world_parameters =
-        raw_world_parameters(Some(24.0), &char_quants)
+        raw_world_parameters(coa, adh, cal, cil, &char_quants)
             .refine(&char_quants);
     let cell_groups = cell_groups(&mut rng, &char_quants);
 
@@ -180,10 +183,16 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         "None".to_string()
     };
 
+    let seed_string = if let Some(i) = seed {
+        i.to_string()
+    } else {
+        "None".to_string()
+    };
+
     Experiment {
         file_name: format!(
-            "separated_pair_cil={}_cal={}_adh={}_coa={}",
-            cil, cal, adh, coa
+            "separated_pair_cil={}_cal={}_adh={}_coa={}_seed={}",
+            cil, cal, adh, coa, seed_string
         ),
         char_quants,
         world_parameters,
@@ -209,7 +218,7 @@ fn gen_default_raw_params(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::SpecificRandom(marked_rac),
+            ty: DistributionType::Random,
         },
         DistributionScheme {
             frac: 0.1,
@@ -222,7 +231,7 @@ fn gen_default_raw_params(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::SpecificRandom(marked_rho),
+            ty: DistributionType::Random,
         },
         DistributionScheme {
             frac: 0.1,

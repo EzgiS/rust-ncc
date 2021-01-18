@@ -3,10 +3,11 @@ import json
 import numpy as np
 import json
 import cbor2
-
+from matplotlib import animation
 
 output = None
 
+# pick your file name input
 file_name = "history_separated_pair_cil=60_cal=None_adh=13_coa=24_seed=4454.cbor"
 
 with open(file_name, mode='rb') as sf:
@@ -69,7 +70,7 @@ def extract_scalars(state_key, dat_key, state_recs):
 
 poly_per_cell_per_tstep = extract_p2ds_from_cell_states('core', 'poly', state_recs)
 uivs_per_cell_per_tstep = extract_p2ds_from_cell_states('geom', 'unit_inward_vecs',
-                                       state_recs)
+                                                        state_recs)
 uovs_per_cell_per_tstep = -1 * uivs_per_cell_per_tstep
 rac_acts_per_cell_per_tstep = extract_scalars('core', 'rac_acts', state_recs)
 rac_act_arrows_per_cell_per_tstep = 50 * rac_acts_per_cell_per_tstep[:, :, :,
@@ -146,12 +147,7 @@ adhs_per_cell_per_tstep = 11*extract_p2ds_from_interactions('x_adhs', state_recs
 circ_vixs = np.take(np.arange(16), np.arange(17), mode='wrap')
 
 
-def paint(delta):
-    global fig
-    global ax
-    global tstep_ix
-    global num_tsteps
-
+def paint(tstep_ix, fig, ax):
     old_xlim = ax.get_xlim()
     old_ylim = ax.get_ylim()
     ax.cla()
@@ -191,7 +187,7 @@ def paint(delta):
             adh_arrow_color = "cyan"
         for p, adh in zip(poly, adhs):
             ax.arrow(p[0], p[1], adh[0], adh[1], color=adh_arrow_color,
-             length_includes_head=True, head_width=1.0)
+                     length_includes_head=True, head_width=1.0)
 
     # for rac_act in rac_acts_arrows_per_tstep[tstep]:
     #     ax.arrow(rac_act[0], rac_act[1], rac_act[2], rac_act[3], color="b", length_includes_head=True, head_width=0.0)
@@ -211,40 +207,27 @@ def paint(delta):
     #     ax.arrow(edge_force[0], edge_force[1], edge_force[2], edge_force[3], color="g", length_includes_head=True, head_width=0.5)
     # for rgtp_force in rgtp_forces_per_tstep[tstep]:
     #     ax.arrow(rgtp_force[0], rgtp_force[1], rgtp_force[2], rgtp_force[3], color="b", length_includes_head=True, head_width=0.5)
+
     ax.set_title("frame {}".format(tsteps[tstep_ix]))
-    tstep_ix = (tstep_ix + delta) % len(tsteps)
-    plt.show()
+    return ax.get_children()
 
 
-def on_press(event):
-    global fig
-    global DEFAULT_XLIM
-    global DEFAULT_YLIM
-    if event.key == 'x':
-        paint(1)
-    elif event.key == 'z':
-        paint(-1)
-    if event.key == 'c':
-        paint(-5)
-    elif event.key == 'v':
-        paint(5)
-    elif event.key == 'n':
-        paint(-10)
-    elif event.key == 'm':
-        paint(10)
-    elif event.key == 'r':
-        ax.set_aspect('equal')
-        ax.set_xlim(DEFAULT_XLIM)
-        ax.set_ylim(DEFAULT_YLIM)
-    fig.canvas.draw()
 
-
+DEFAULT_XLIM = [-40, 200]
+DEFAULT_YLIM = [-40, 200]
 num_tsteps = poly_per_cell_per_tstep.shape[0]
 tstep_ix = 0
 fig, ax = plt.subplots()
-DEFAULT_XLIM = [-100, 200]
-DEFAULT_YLIM = [-100, 200]
 ax.set_aspect('equal')
 ax.set_xlim(DEFAULT_XLIM)
 ax.set_ylim(DEFAULT_YLIM)
-fig.canvas.mpl_connect('key_press_event', on_press)
+# fig.canvas.mpl_connect('key_press_event', on_press)
+tstep_ixs = [n for n in range(len(tsteps))]
+# Set up formatting for the movie files
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+
+cell_ani = animation.FuncAnimation(fig, paint, fargs=(fig, ax),
+                                   interval=100, blit=True)
+# name relevant to what you want your experiment title
+cell_ani.save('separated_pair_cil=60_cal=None_adh=13_coa=24_seed=4454.mp4', writer=writer)
