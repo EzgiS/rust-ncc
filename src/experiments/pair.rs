@@ -116,7 +116,7 @@ pub fn generate(seed: Option<u64>) -> Experiment {
     };
     let cil = 60.0;
     let cal: Option<f32> = None;
-    let adh: Option<f32> = Some(13.0);
+    let adh: Option<f32> = Some(5.0);
     let coa: Option<f32> = Some(24.0);
 
     let char_quants = gen_default_char_quants();

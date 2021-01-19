@@ -32,7 +32,7 @@ fn main() {
 
     let now = Instant::now();
     // to run longer change final_tpoint to 6 etc.
-    w.simulate(6.0 * 3600.0, 30);
+    w.simulate(6.0 * 3600.0, 20);
     println!("Simulation complete. {} s.", now.elapsed().as_secs());
     let now = Instant::now();
     w.save_history(true, vec![Format::Cbor, Format::Bincode])
