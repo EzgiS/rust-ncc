@@ -155,7 +155,7 @@ pub fn generate(seed: Option<u64>) -> Experiment {
     };
     let cil = 60.0;
     let cal: Option<f32> = None;
-    let adh: Option<f32> = Some(20.0);
+    let adh: Option<f32> = Some(10.0);
     let coa: Option<f32> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
@@ -218,7 +218,7 @@ fn gen_default_raw_params(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Random,
+            ty: DistributionType::SpecificRandom(marked_rac),
         },
         DistributionScheme {
             frac: 0.1,
@@ -231,7 +231,7 @@ fn gen_default_raw_params(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::Random,
+            ty: DistributionType::SpecificRandom(marked_rho),
         },
         DistributionScheme {
             frac: 0.1,
