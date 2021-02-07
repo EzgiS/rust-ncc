@@ -114,9 +114,9 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         Some(s) => Pcg32::seed_from_u64(s),
         None => Pcg32::from_entropy(),
     };
-    let cil = 60.0;
-    let cal: Option<f32> = None;
-    let adh: Option<f32> = Some(5.0);
+    let cil = 0.0;
+    let cal: Option<f32> = Some(60.0);
+    let adh: Option<f32> = Some(10.0);
     let coa: Option<f32> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
