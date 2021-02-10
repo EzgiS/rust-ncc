@@ -7,7 +7,7 @@ import cbor2
 
 output = None
 
-file_name = "../output/separated_pair_cil=70_cal=None_adh=10_coa=24_seed=7_rt.cbor"
+file_name = "../output/cal_test_cil=60_cal=60_adh=8_coa=24_seed=7_rt.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -174,13 +174,13 @@ def paint(delta):
             rac_act_arrows_per_cell_per_tstep[tstep_ix]
     ):
         for p, rac_arrow in zip(poly, rac_act_arrows):
-            ax.arrow(p[0], p[1], 1*rac_arrow[0], 1*rac_arrow[1], color="b",
+            ax.arrow(p[0], p[1], 3*rac_arrow[0], 3*rac_arrow[1], color="b",
                      length_includes_head=True, head_width=0.0)
 
     for poly, rho_act_arrows in zip(poly_per_cell_per_tstep[tstep_ix],
                                     rho_act_arrows_per_cell_per_tstep[tstep_ix]):
         for p, rho_arrow in zip(poly, rho_act_arrows):
-            ax.arrow(p[0], p[1], 1*rho_arrow[0], 1*rho_arrow[1], color="r",
+            ax.arrow(p[0], p[1], 3*rho_arrow[0], 3*rho_arrow[1], color="r",
                      length_includes_head=True, head_width=0.0)
 
     for poly_ix, poly, adhs in zip(np.arange(0, len(poly_per_cell_per_tstep[0])), poly_per_cell_per_tstep[tstep_ix], adhs_per_cell_per_tstep[tstep_ix]):

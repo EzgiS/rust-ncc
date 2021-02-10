@@ -11,7 +11,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let seed = 7; //rng.sample(Uniform::new(0, 10000));
     println!("seed: {}", seed);
-    let exp = experiments::separated_pair::generate(Some(seed), true);
+    let exp = experiments::cal_test::generate(Some(seed), true);
 
     let mut w = world::World::new(
         exp,

@@ -4,13 +4,13 @@ use crate::cell::chemistry::{
 };
 use crate::experiments::{
     gen_default_adhesion_mag, gen_default_char_quants,
-    gen_default_phys_contact_dist, gen_default_viscosity, CellGroup,
-    Experiment, GroupBBox,
+    gen_default_phys_contact_dist, gen_default_vertex_viscosity,
+    CellGroup, Experiment, GroupBBox,
 };
 use crate::interactions::dat_sym2d::SymCcDat;
 use crate::math::v2d::V2D;
 use crate::parameters::quantity::{
-    Force, Length, Quantity, Stress, Time,
+    Force, Length, Quantity, Stress, Time, Tinv,
 };
 use crate::parameters::{
     CharQuantities, CoaParams, PhysicalContactParams, RawCloseBounds,
@@ -53,30 +53,28 @@ fn group_bbox(
 fn cell_groups(
     rng: &mut Pcg32,
     cq: &CharQuantities,
+    randomization: bool,
 ) -> Vec<CellGroup> {
-    let group0_marked_rho = [
-        false, true, true, true, true, true, true, true, false,
-        false, false, false, false, false, false, false,
+    let group_marked_rho = [
+        true, true, true, true, true, true, true, true, false, false,
+        false, false, false, false, false, false,
     ];
-    let group0_marked = [
+    let group_marked_rac = [
         false, false, false, false, false, false, false, false,
         false, true, true, true, true, true, true, true,
     ];
-    let group1_marked = [
-        false, false, false, false, false, false, false, false,
-        false, true, true, true, true, true, true, true,
-    ];
+
     let raw_params0 = gen_default_raw_params_0(
         rng,
-        false,
-        group0_marked,
-        group0_marked_rho,
+        randomization,
+        group_marked_rac,
+        group_marked_rho,
     );
     let raw_params1 = gen_default_raw_params_1(
         rng,
-        false,
-        group1_marked,
-        group0_marked,
+        randomization,
+        group_marked_rac,
+        group_marked_rho,
     );
     let params0 = raw_params0.gen_parameters(cq);
     let params1 = raw_params1.gen_parameters(cq);
@@ -89,7 +87,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(1.1));
+        (Length(0.0), raw_params1.cell_diam.mul_number(1.2));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -115,6 +113,9 @@ fn gen_cil_mat() -> SymCcDat<f64> {
 /// cells interact with each other, and any boundaries.
 fn raw_world_parameters(
     coa_mag: Option<f64>,
+    adh_mag: Option<f64>,
+    cal_mag: Option<f64>,
+    cil_mag: f64,
     char_quants: &CharQuantities,
 ) -> RawWorldParameters {
     // Some(RawCoaParams {
@@ -124,8 +125,13 @@ fn raw_world_parameters(
     // })
     let one_at = gen_default_phys_contact_dist();
     let coa = RawCoaParams::default_with_mag(coa_mag);
+    let adh_mag = if let Some(x) = adh_mag {
+        Some(gen_default_adhesion_mag(char_quants, x))
+    } else {
+        None
+    };
     RawWorldParameters {
-        vertex_eta: gen_default_viscosity(),
+        vertex_eta: gen_default_vertex_viscosity(char_quants),
         interactions: RawInteractionParams {
             coa,
             chem_attr: None,
@@ -135,33 +141,34 @@ fn raw_world_parameters(
                     one_at.mul_number(2.0),
                     one_at,
                 ),
-                // adh_mag: None,
-                adh_mag: Some(gen_default_adhesion_mag(
-                    char_quants,
-                    10.0,
-                )),
-                cal_mag: Some(10.0),
-                cil_mag: 10.0,
+                adh_mag,
+                cal_mag,
+                cil_mag,
             },
         },
     }
 }
 
 /// Generate the experiment, so that it can be run.
-pub fn generate(seed: Option<u64>) -> Experiment {
+pub fn generate(
+    seed: Option<u64>,
+    randomization: bool,
+) -> Experiment {
     let mut rng = match seed {
         Some(s) => Pcg32::seed_from_u64(s),
         None => Pcg32::from_entropy(),
     };
-    let cil = 10.0;
-    let cal: Option<f64> = Some(10.0);
-    let adh = Some(10.0);
-    let coa: Option<f64> = None;
+    let cil = 60.0;
+    let cal: Option<f64> = Some(60.0);
+    let adh: Option<f64> = Some(8.0);
+    let coa: Option<f64> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
     let world_parameters =
-        raw_world_parameters(None, &char_quants).refine(&char_quants);
-    let cell_groups = cell_groups(&mut rng, &char_quants);
+        raw_world_parameters(coa, adh, cal, cil, &char_quants)
+            .refine(&char_quants);
+    let cell_groups =
+        cell_groups(&mut rng, &char_quants, randomization);
 
     //convert the option into string
     let cal = if let Some(i) = cal {
@@ -182,14 +189,19 @@ pub fn generate(seed: Option<u64>) -> Experiment {
         "None".to_string()
     };
 
+    let seed_string = if let Some(i) = seed {
+        i.to_string()
+    } else {
+        "None".to_string()
+    };
+
+    let random_string =
+        if randomization == true { "rt" } else { "rf" };
+
     Experiment {
-        // file_name: format!(
-        //     "cal_test_cil={}_cal={}_adh={}",
-        //     cil, cal, adh
-        // ),
         file_name: format!(
-            "cal_test_cil={}_cal={}_adh={}_coa={}",
-            cil, cal, adh, coa
+            "cal_test_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
+            cil, cal, adh, coa, seed_string, random_string
         ),
         char_quants,
         world_parameters,
@@ -214,7 +226,7 @@ fn gen_default_raw_params_0(
 
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
-            frac: 0.03,
+            frac: 0.1,
             ty: DistributionType::SpecificUniform(marked_rac),
         },
         DistributionScheme {
@@ -245,20 +257,20 @@ fn gen_default_raw_params_0(
         halfmax_rgtp_frac: 0.4,
         lm_ss: Stress(10.0).kilo(),
         rho_friction: 0.2,
-        stiffness_ctyo: Force(1e-7),
+        stiffness_cyto: Force(1e-7),
         diffusion_rgtp: rgtp_d,
-        tot_rac: 2.5e6,
-        tot_rho: 1e6,
-        kgtp_rac: 24.0,
-        kgtp_rac_auto: 500.0,
-        kdgtp_rac: 8.0,
-        kdgtp_rho_on_rac: 4000.0,
+        k_mem_off: Tinv(0.15),
+        k_mem_on: Tinv(0.02),
+        kgtp_rac: Tinv(1e-4).mul_number(24.0),
+        kgtp_rac_auto: Tinv(1e-4).mul_number(500.0),
+        kdgtp_rac: Tinv(1e-4).mul_number(8.0),
+        kdgtp_rho_on_rac: Tinv(1e-4).mul_number(4000.0),
         halfmax_tension_inhib: 0.1,
         tension_inhib: 40.0,
-        kgtp_rho: 28.0,
-        kgtp_auto_rho: 390.0,
-        kdgtp_rho: 60.0,
-        kdgtp_rac_on_rho: 400.0,
+        kgtp_rho: Tinv(1e-4).mul_number(28.0),
+        kgtp_auto_rho: Tinv(1e-4).mul_number(390.0),
+        kdgtp_rho: Tinv(1e-4).mul_number(60.0),
+        kdgtp_rac_on_rho: Tinv(1e-4).mul_number(400.0),
         randomization,
         rand_avg_t: Time(40.0 * 60.0),
         rand_std_t: Time(0.2 * 40.0 * 60.0),
@@ -315,20 +327,20 @@ fn gen_default_raw_params_1(
         halfmax_rgtp_frac: 0.4,
         lm_ss: Stress(10.0).kilo(),
         rho_friction: 0.2,
-        stiffness_ctyo: Force(1e-7),
+        stiffness_cyto: Force(1e-7),
         diffusion_rgtp: rgtp_d,
-        tot_rac: 2.5e6,
-        tot_rho: 1e6,
-        kgtp_rac: 24.0,
-        kgtp_rac_auto: 500.0,
-        kdgtp_rac: 8.0,
-        kdgtp_rho_on_rac: 4000.0,
+        k_mem_off: Tinv(0.15),
+        k_mem_on: Tinv(0.02),
+        kgtp_rac: Tinv(1e-4).mul_number(24.0),
+        kgtp_rac_auto: Tinv(1e-4).mul_number(500.0),
+        kdgtp_rac: Tinv(1e-4).mul_number(8.0),
+        kdgtp_rho_on_rac: Tinv(1e-4).mul_number(4000.0),
         halfmax_tension_inhib: 0.1,
         tension_inhib: 40.0,
-        kgtp_rho: 28.0,
-        kgtp_auto_rho: 390.0,
-        kdgtp_rho: 60.0,
-        kdgtp_rac_on_rho: 400.0,
+        kgtp_rho: Tinv(1e-4).mul_number(28.0),
+        kgtp_auto_rho: Tinv(1e-4).mul_number(390.0),
+        kdgtp_rho: Tinv(1e-4).mul_number(60.0),
+        kdgtp_rac_on_rho: Tinv(1e-4).mul_number(400.0),
         randomization,
         rand_avg_t: Time(40.0 * 60.0),
         rand_std_t: Time(0.2 * 40.0 * 60.0),
