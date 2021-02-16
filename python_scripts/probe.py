@@ -7,7 +7,8 @@ import cbor2
 
 output = None
 
-file_name = "../output/cal_test_cil=60_cal=60_adh=8_coa=24_seed=7_rt.cbor"
+file_name = "../output/separated_pair_cil=30_cal=None_adh=10_coa=24_seed=7_rt.cbor"
+
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
