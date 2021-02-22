@@ -80,7 +80,11 @@ rho_act_arrows_per_cell_per_tstep = 50 * rho_acts_per_cell_per_tstep[:, :, :,
                                          np.newaxis] * uivs_per_cell_per_tstep
 
 adhs_per_cell_per_tstep = 5*extract_p2ds_from_interactions('x_adhs', state_recs)
-
+#adhs_per_cell_per_tstep[time,cell,vertex]
+#adhs_per_cell_per_tstep[:,cell index,vertex]
+sum_non_adh_forces_per_cell_per_tstep = extract_p2ds_from_cell_states("mech",
+                                                                      "sum_forces",
+                                                                      state_recs)
 
 
 # output = None

@@ -9,6 +9,7 @@
 pub mod cal_test;
 pub mod cil_test;
 pub mod n_cells;
+pub mod pair;
 pub mod separated_pair;
 
 use crate::cell::chemistry::{

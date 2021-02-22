@@ -86,7 +86,7 @@ fn cell_groups(
         parameters: params0,
     };
     let bottom_left1 =
-        (Length(0.0), raw_params1.cell_diam.mul_number(2.0));
+        (raw_params1.cell_diam.mul_number(1.0), Length(0.0));
     let num_cells1 = 1;
     let group1_layout = CellGroup {
         num_cells: num_cells1,
@@ -159,7 +159,7 @@ pub fn generate(
     };
     let cil = 60.0;
     let cal: Option<f64> = None;
-    let adh: Option<f64> = Some(3.0);
+    let adh: Option<f64> = Some(15.0);
     let coa: Option<f64> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
@@ -199,7 +199,7 @@ pub fn generate(
 
     Experiment {
         file_name: format!(
-            "separated_pair_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
+            "pair_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
             cil, cal, adh, coa, seed_string, random_string
         ),
         char_quants,
@@ -226,7 +226,7 @@ fn gen_default_raw_params(
     let init_rac = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::SpecificRandom(marked_rac),
+            ty: DistributionType::Random,
         },
         DistributionScheme {
             frac: 0.1,
@@ -239,7 +239,7 @@ fn gen_default_raw_params(
     let init_rho = RgtpDistribution::generate(
         DistributionScheme {
             frac: 0.1,
-            ty: DistributionType::SpecificRandom(marked_rho),
+            ty: DistributionType::Random,
         },
         DistributionScheme {
             frac: 0.1,

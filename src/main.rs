@@ -9,7 +9,7 @@ use std::time::Instant;
 
 fn main() {
     let mut rng = rand::thread_rng();
-    let seed = 7; //rng.sample(Uniform::new(0, 10000));
+    let seed = 1234; //rng.sample(Uniform::new(0, 10000));
     println!("seed: {}", seed);
     let exp = experiments::separated_pair::generate(Some(seed), true);
 
