@@ -4,13 +4,10 @@ import numpy as np
 import json
 import cbor2
 
-from python_scripts.plot_2 import sum_non_adh_forces_per_cell_per_tstep, rgtp_forces_per_cell_per_tstep, \
-    edge_forces_per_cell_per_tstep, cyto_forces_per_cell_per_tstep
 
 output = None
 
-file_name = "../output/separated_pair_cil=30_cal=None_adh=10_coa=24_seed=7_rt.cbor"
-
+file_name = "../output/pair_cil=60_cal=None_adh=5_coa=24_seed=7_rt.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -28,7 +25,8 @@ frequency = world_history["snap_freq"]
 
 
 def lookup_tstep_ix(tstep):
-    return int(np.floor(tstep/frequency))
+    return int(np.floor(tstep / frequency))
+
 
 def p2ds_to_numpy(p2ds):
     vs = []
@@ -46,6 +44,7 @@ def extract_p2ds_from_cell_states(state_key, dat_key, state_recs):
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
 
+
 def extract_p2ds_from_interactions(dat_key, state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
@@ -54,6 +53,7 @@ def extract_p2ds_from_interactions(dat_key, state_recs):
             dat_per_cell.append(p2ds_to_numpy(cell_rec[dat_key]))
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
+
 
 def extract_scalars(state_key, dat_key, state_recs):
     dat_per_cell_per_tstep = []
@@ -79,25 +79,18 @@ rho_acts_per_cell_per_tstep = extract_scalars('core', 'rho_acts', state_recs)
 rho_act_arrows_per_cell_per_tstep = 50 * rho_acts_per_cell_per_tstep[:, :, :,
                                          np.newaxis] * uivs_per_cell_per_tstep
 
-adhs_per_cell_per_tstep = 5*extract_p2ds_from_interactions('x_adhs', state_recs)
-#adhs_per_cell_per_tstep[time,cell,vertex]
-#adhs_per_cell_per_tstep[:,cell index,vertex]
+adhs_per_cell_per_tstep = 5 * extract_p2ds_from_interactions('x_adhs', state_recs)
+# adhs_per_cell_per_tstep[time,cell,vertex]
+# adhs_per_cell_per_tstep[:,cell index,vertex]
 sum_non_adh_forces_per_cell_per_tstep = extract_p2ds_from_cell_states("mech",
                                                                       "sum_forces",
                                                                       state_recs)
+adh_cell_0_vertex_0 = adhs_per_cell_per_tstep[:, 0, 0]
+adh_cell_1_vertex_8 = adhs_per_cell_per_tstep[:, 1, 8]
+
+non_adh_forces_cell_0_vertex_0 = sum_non_adh_forces_per_cell_per_tstep[:, 0, 0]
+non_adh_forces_cell_0_vertex_0 = sum_non_adh_forces_per_cell_per_tstep[:, 1, 8]
 
 
-# output = None
-# file_name = "../output/separated_pair_cil=30_cal=None_adh=10_coa=24_seed=7_rt.cbor"
-# with open(file_name, mode='rb') as sf:
-#     output = cbor2.load(sf)
-# tsteps = [o[0] for o in output]
-# frequency = tsteps[1] - tsteps[0]
-# state_recs = [o[1] for o in output]
-# interactions = [rec["interactions"] for rec in state_recs]
-# x_adhs_0_4 = [inters[0]["x_adhs"][4] for inters in interactions]
-# x_adhs_1_12 = [inters[1]["x_adhs"][12] for inters in interactions]
-#
-#
-# plt.plot(tsteps, x_adhs_0_4, color="black", marker=".")
-# plt.plot(tsteps, x_adhs_1_12, color="green", marker=".")
+plt.plot(tsteps, non_adh_forces_cell_0_vertex_0, color="black", marker=".")
+plt.plot(tsteps, non_adh_forces_cell_0_vertex_0, color="green", marker=".")
