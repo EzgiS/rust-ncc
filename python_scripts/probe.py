@@ -7,7 +7,7 @@ import cbor2
 
 output = None
 
-file_name = "../output/pair_cil=60_cal=None_adh=15_coa=24_seed=7_rt.cbor"
+file_name = "../output/pair_cil=60_cal=None_adh=5_coa=24_seed=7_rt.cbor"
 
 
 snapshots = []

@@ -1,3 +1,5 @@
+from builtins import print
+
 import matplotlib.pyplot as plt
 import json
 import numpy as np
@@ -89,8 +91,16 @@ adh_cell_0_vertex_0 = adhs_per_cell_per_tstep[:, 0, 0]
 adh_cell_1_vertex_8 = adhs_per_cell_per_tstep[:, 1, 8]
 
 non_adh_forces_cell_0_vertex_0 = sum_non_adh_forces_per_cell_per_tstep[:, 0, 0]
-non_adh_forces_cell_0_vertex_0 = sum_non_adh_forces_per_cell_per_tstep[:, 1, 8]
+non_adh_forces_cell_1_vertex_8 = sum_non_adh_forces_per_cell_per_tstep[:, 1, 8]
+
+# print(adh_cell_0_vertex_0)
+# print(adh_cell_1_vertex_8)
 
 
-plt.plot(tsteps, non_adh_forces_cell_0_vertex_0, color="black", marker=".")
+plt.plot(tsteps, adh_cell_0_vertex_0, color="black", marker=".")
 plt.plot(tsteps, non_adh_forces_cell_0_vertex_0, color="green", marker=".")
+plt.show()
+
+# plt.plot(tsteps, adh_cell_1_vertex_8, color="black", marker=".")
+# plt.plot(tsteps, non_adh_forces_cell_1_vertex_8, color="green", marker=".")
+# plt.show()
