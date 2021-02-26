@@ -11,6 +11,7 @@ pub mod cil_test;
 pub mod n_cells;
 pub mod pair;
 pub mod separated_pair;
+// mod four_cell;
 
 use crate::cell::chemistry::{
     DistributionScheme, DistributionType, RgtpDistribution,

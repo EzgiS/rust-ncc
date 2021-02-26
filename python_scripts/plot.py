@@ -9,7 +9,7 @@ import cbor2
 
 output = None
 
-file_name = "../output/pair_cil=60_cal=None_adh=5_coa=24_seed=7_rt.cbor"
+file_name = "../output/pair_cil=60_cal=None_adh=15_coa=24_seed=7_rt.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -93,12 +93,19 @@ adh_cell_1_vertex_8 = adhs_per_cell_per_tstep[:, 1, 8]
 non_adh_forces_cell_0_vertex_0 = sum_non_adh_forces_per_cell_per_tstep[:, 0, 0]
 non_adh_forces_cell_1_vertex_8 = sum_non_adh_forces_per_cell_per_tstep[:, 1, 8]
 
+x_axis_adh_0 = adh_cell_0_vertex_0[:, 0]
+y_axis_adh_0 = adh_cell_0_vertex_0[:, 1]
+
+x_axis_non_adh_0 = non_adh_forces_cell_0_vertex_0[:, 0]
+y_axis_non_adh_0 = non_adh_forces_cell_0_vertex_0[:, 1]
+
+# print(x_axis_adh_0)
 # print(adh_cell_0_vertex_0)
 # print(adh_cell_1_vertex_8)
 
 
-plt.plot(tsteps, adh_cell_0_vertex_0, color="black", marker=".")
-plt.plot(tsteps, non_adh_forces_cell_0_vertex_0, color="green", marker=".")
+plt.plot(tsteps, x_axis_adh_0, color="black", marker=".")
+plt.plot(tsteps, x_axis_non_adh_0, color="green", marker=".")
 plt.show()
 
 # plt.plot(tsteps, adh_cell_1_vertex_8, color="black", marker=".")
