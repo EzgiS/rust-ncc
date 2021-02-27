@@ -8,26 +8,22 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 fn main() {
-    let seed_list: Vec<u64> = vec![4, 44, 444, 4444];
-    for seed in seed_list {
-        let mut rng = rand::thread_rng();
-        // let seed = 1111; //rng.sample(Uniform::new(0, 10000));
-        println!("seed: {}", seed);
-        let exp = experiments::pair::generate(Some(seed), true);
+    // let seed_list: Vec<u64> = vec![4, 44, 444, 4444];
+    // for seed in seed_list {
+    let mut rng = rand::thread_rng();
+    let seed = 7; //rng.sample(Uniform::new(0, 10000));
+    println!("seed: {}", seed);
+    let exp = experiments::four_cell::generate(Some(seed), true);
 
-        let mut w = world::World::new(
-            exp,
-            Some(PathBuf::from(DEFAULT_OUTPUT_DIR)),
-            10,
-            100,
-        );
+    let mut w = world::World::new(
+        exp,
+        Some(PathBuf::from(DEFAULT_OUTPUT_DIR)),
+        10,
+        100,
+    );
 
-        let now = Instant::now();
-        w.simulate(3.0 * 3600.0, true);
+    let now = Instant::now();
+    w.simulate(3.0 * 3600.0, true);
 
-        println!(
-            "Simulation complete. {} s.",
-            now.elapsed().as_secs()
-        );
-    }
+    println!("Simulation complete. {} s.", now.elapsed().as_secs());
 }

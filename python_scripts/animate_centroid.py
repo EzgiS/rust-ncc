@@ -150,15 +150,6 @@ def paint(tstep_ix, fig, ax):
     ax.cla()
     ax.relim()
 
-    # bbox to control ax.relim
-    centroid = np.average(centroids_per_cell_per_tstep[tstep_ix], axis=0)
-    (xmin, xmax) = [centroid[0] - DEFAULT_BBOX_LIM[0] * 0.5,
-                    centroid[0] + DEFAULT_BBOX_LIM[0] * 0.5]
-    (ymin, ymax) = [centroid[1] - DEFAULT_BBOX_LIM[1] * 0.5,
-                    centroid[1] + DEFAULT_BBOX_LIM[1] * 0.5]
-    bbox = np.array(
-        [[xmin, ymin], [xmin, ymax], [xmax, ymax], [xmax, ymin], [xmin, ymin]])
-    ax.plot(bbox[:, 0], bbox[:, 1], color=(0.0, 0.0, 0.0, 0.0))
 
     for (ci, poly) in enumerate(poly_per_cell_per_tstep[tstep_ix]):
         if ci == 0:
@@ -168,9 +159,9 @@ def paint(tstep_ix, fig, ax):
             poly_color = "g"
             centroid_trail_color = (127 / 255, 191 / 255, 63 / 255)
 
-        # this_cell_centroids = centroids_per_cell_per_tstep[:tstep_ix, ci]
-        # ax.plot(this_cell_centroids[:,0], this_cell_centroids[:,1],
-        # color=centroid_trail_color)
+        this_cell_centroids = centroids_per_cell_per_tstep[:tstep_ix, ci]
+        ax.plot(this_cell_centroids[:,0], this_cell_centroids[:,1],
+        color=centroid_trail_color)
 
         for vix in range(16):
             ax.plot([poly[vix, 0], poly[(vix + 1) % 16, 0]],
@@ -229,5 +220,5 @@ cell_ani = animation.FuncAnimation(fig, paint, frames=tstep_ixs,
                                    fargs=(fig, ax),
                                    interval=1, blit=True)
 # name relevant to what you want your experiment title
-cell_ani.save('four_cell_cil=60_cal=None_adh=10_coa=24_seed=7_rt.mp4',
+cell_ani.save('four_cell_cil=60_cal=None_adh=10_coa=24_seed=7_rt_trailing.mp4',
               writer=writer)

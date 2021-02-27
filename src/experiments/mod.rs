@@ -8,10 +8,10 @@
 
 pub mod cal_test;
 pub mod cil_test;
+pub mod four_cell;
 pub mod n_cells;
 pub mod pair;
 pub mod separated_pair;
-// mod four_cell;
 
 use crate::cell::chemistry::{
     DistributionScheme, DistributionType, RgtpDistribution,
