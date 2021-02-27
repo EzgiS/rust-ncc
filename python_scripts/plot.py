@@ -8,7 +8,7 @@ import cbor2
 
 output = None
 
-file_name = "../output/pair_cil=60_cal=None_adh=15_coa=24_seed=7_rt.cbor"
+file_name = "../output/pair_cil=60_cal=None_adh=5_coa=24_seed=7_rt.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -105,7 +105,14 @@ y_axis_non_adh_0 = non_adh_forces_cell_0_vertex_0[:, 1]
 
 plt.plot(tsteps, x_axis_adh_0, color="black", marker=".")
 plt.plot(tsteps, x_axis_non_adh_0, color="green", marker=".")
+plt.title('Forces on the horizontal axis on Cell 0 Vertex 0')
 plt.show()
+
+plt.plot(tsteps, y_axis_adh_0, color="black", marker=".")
+plt.plot(tsteps, y_axis_non_adh_0, color="green", marker=".")
+plt.title('Forces on the vertical axis on Cell 0 Vertex 0')
+plt.show()
+
 
 # plt.plot(tsteps, adh_cell_1_vertex_8, color="black", marker=".")
 # plt.plot(tsteps, non_adh_forces_cell_1_vertex_8, color="green", marker=".")

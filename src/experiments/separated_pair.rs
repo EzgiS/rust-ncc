@@ -157,7 +157,7 @@ pub fn generate(
         Some(s) => Pcg32::seed_from_u64(s),
         None => Pcg32::from_entropy(),
     };
-    let cil = 90.0;
+    let cil = 60.0;
     let cal: Option<f64> = None;
     let adh: Option<f64> = Some(10.0);
     let coa: Option<f64> = Some(24.0);

@@ -49,7 +49,7 @@ impl Default for SimpleClosePoint {
             vert_ix: 0,
             vector_to: Default::default(),
             smooth_factor: 0.0,
-            edge_point_param: 0.0
+            edge_point_param: 0.0,
         }
     }
 }
@@ -381,7 +381,10 @@ impl PhysicalContactGenerator {
             vec![[V2D::default(); NVERTS]; num_cells];
         let mut cal_per_cell = vec![[0.0f64; NVERTS]; num_cells];
         let mut cil_per_cell = vec![[0.0f64; NVERTS]; num_cells];
-        let mut close_points_per_cell = vec![[SimpleClosePoint::default(); NVERTS]; num_cells];
+
+        let mut close_points_per_cell =
+            vec![[SimpleClosePoint::default(); NVERTS]; num_cells];
+
         for ci in 0..num_cells {
             let x_cals = &mut cal_per_cell[ci];
             let x_cils = &mut cil_per_cell[ci];
@@ -397,15 +400,17 @@ impl PhysicalContactGenerator {
                     .get_close_edges_to(ci, vi, rel_rgtps_per_cell)
                     .into_iter()
                 {
-                    close_points_per_cell[ci][vi] = SimpleClosePoint {
-                        empty: false,
-                        cell_ix: oci,
-                        vert_ix: ovi,
-                        vector_to,
-                        smooth_factor,
-                        edge_point_param
-                    };
+                    close_points_per_cell[ci][vi] =
+                        SimpleClosePoint {
+                            empty: false,
+                            cell_ix: oci,
+                            vert_ix: ovi,
+                            vector_to,
+                            smooth_factor,
+                            edge_point_param,
+                        };
                     //println!("added a simple close point: (vi: {}, n: {})", vi, close_points_per_vertex[vi].len());
+
                     match (self.params.cal_mag, crl) {
                         (Some(cal_mag), CrlEffect::Cal) => {
                             x_cals[vi] = smooth_factor * cal_mag;
