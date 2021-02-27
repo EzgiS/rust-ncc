@@ -31,6 +31,15 @@ pub enum ClosePoint {
     None,
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+pub struct SimpleClosePoint {
+    cell_ix: usize,
+    vert_ix: usize,
+    vector_to: V2D,
+    smooth_factor: f64,
+    edge_point_param: f64,
+}
+
 impl Default for ClosePoint {
     fn default() -> Self {
         ClosePoint::None
@@ -130,6 +139,7 @@ pub struct PhysContactFactors {
     pub adh: Vec<[V2D; NVERTS]>,
     pub cil: Vec<[f64; NVERTS]>,
     pub cal: Vec<[f64; NVERTS]>,
+    pub close_points: Vec<Vec<Vec<SimpleClosePoint>>>,
 }
 
 impl PhysicalContactGenerator {
@@ -357,10 +367,12 @@ impl PhysicalContactGenerator {
             vec![[V2D::default(); NVERTS]; num_cells];
         let mut cal_per_cell = vec![[0.0f64; NVERTS]; num_cells];
         let mut cil_per_cell = vec![[0.0f64; NVERTS]; num_cells];
+        let mut close_points_per_cell = vec![vec![vec![]; NVERTS]; num_cells];
         for ci in 0..num_cells {
             let x_cals = &mut cal_per_cell[ci];
             let x_cils = &mut cil_per_cell[ci];
             for vi in 0..NVERTS {
+                let mut close_points_per_vertex = vec![vec![]; NVERTS];
                 for CloseEdge {
                     cell_ix: oci,
                     vert_ix: ovi,
@@ -372,6 +384,13 @@ impl PhysicalContactGenerator {
                     .get_close_edges_to(ci, vi, rel_rgtps_per_cell)
                     .into_iter()
                 {
+                    close_points_per_vertex[vi].push(SimpleClosePoint {
+                        cell_ix: oci,
+                        vert_ix: ovi,
+                        vector_to,
+                        smooth_factor,
+                        edge_point_param
+                    });
                     match (self.params.cal_mag, crl) {
                         (Some(cal_mag), CrlEffect::Cal) => {
                             x_cals[vi] = smooth_factor * cal_mag;
@@ -410,12 +429,14 @@ impl PhysicalContactGenerator {
                         }
                     };
                 }
+                close_points_per_cell.push(close_points_per_vertex);
             }
         }
         PhysContactFactors {
             adh: adh_per_cell,
             cil: cil_per_cell,
             cal: cal_per_cell,
+            close_points: close_points_per_cell,
         }
     }
 }

@@ -20,9 +20,7 @@ use crate::interactions::dat_sym2d::SymCcDat;
 use crate::interactions::gen_bdry::BdryEffectGenerator;
 use crate::interactions::gen_chemoa::ChemAttrGenerator;
 use crate::interactions::gen_coa::CoaGenerator;
-use crate::interactions::gen_phys::{
-    PhysContactFactors, PhysicalContactGenerator,
-};
+use crate::interactions::gen_phys::{PhysContactFactors, PhysicalContactGenerator, SimpleClosePoint};
 use crate::interactions::RelativeRgtpActivity::{
     RacDominant, RhoDominant,
 };
@@ -71,7 +69,7 @@ impl RelativeRgtpActivity {
 }
 
 #[derive(
-    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq,
+    Clone, Debug, Default, Deserialize, Serialize, PartialEq,
 )]
 pub struct Interactions {
     pub x_cals: [f64; NVERTS],
@@ -80,6 +78,7 @@ pub struct Interactions {
     pub x_chem_attrs: [f64; NVERTS],
     pub x_coas: [f64; NVERTS],
     pub x_bdrys: [f64; NVERTS],
+    pub x_close_points: Vec<Vec<SimpleClosePoint>>,
 }
 
 /// Generates interaction related factors.
@@ -153,7 +152,7 @@ impl InteractionGenerator {
         rel_rgtps: &Vec<[RelativeRgtpActivity; NVERTS]>,
     ) -> Vec<Interactions> {
         let num_cells = self.cell_polys.len();
-        let PhysContactFactors { adh, cil, cal } =
+        let PhysContactFactors { adh, cil, cal, close_points } =
             self.phys_contact_generator.generate(rel_rgtps);
         let r_coas = self
             .coa_generator
@@ -178,6 +177,7 @@ impl InteractionGenerator {
                 x_cals: cal[ci],
                 x_cils: cil[ci],
                 x_adhs: adh[ci],
+                x_close_points: close_points[ci].clone(),
                 x_chem_attrs: r_chemoas[ci],
                 x_coas: r_coas[ci],
                 x_bdrys: r_bdrys[ci],
