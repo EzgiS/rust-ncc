@@ -33,11 +33,25 @@ pub enum ClosePoint {
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
 pub struct SimpleClosePoint {
+    empty: bool,
     cell_ix: usize,
     vert_ix: usize,
     vector_to: V2D,
     smooth_factor: f64,
     edge_point_param: f64,
+}
+
+impl Default for SimpleClosePoint {
+    fn default() -> Self {
+        SimpleClosePoint {
+            empty: true,
+            cell_ix: 0,
+            vert_ix: 0,
+            vector_to: Default::default(),
+            smooth_factor: 0.0,
+            edge_point_param: 0.0
+        }
+    }
 }
 
 impl Default for ClosePoint {
@@ -139,7 +153,7 @@ pub struct PhysContactFactors {
     pub adh: Vec<[V2D; NVERTS]>,
     pub cil: Vec<[f64; NVERTS]>,
     pub cal: Vec<[f64; NVERTS]>,
-    pub close_points: Vec<Vec<Vec<SimpleClosePoint>>>,
+    pub close_points: Vec<[SimpleClosePoint; NVERTS]>,
 }
 
 impl PhysicalContactGenerator {
@@ -367,12 +381,11 @@ impl PhysicalContactGenerator {
             vec![[V2D::default(); NVERTS]; num_cells];
         let mut cal_per_cell = vec![[0.0f64; NVERTS]; num_cells];
         let mut cil_per_cell = vec![[0.0f64; NVERTS]; num_cells];
-        let mut close_points_per_cell = vec![vec![vec![]; NVERTS]; num_cells];
+        let mut close_points_per_cell = vec![[SimpleClosePoint::default(); NVERTS]; num_cells];
         for ci in 0..num_cells {
             let x_cals = &mut cal_per_cell[ci];
             let x_cils = &mut cil_per_cell[ci];
             for vi in 0..NVERTS {
-                let mut close_points_per_vertex = vec![vec![]; NVERTS];
                 for CloseEdge {
                     cell_ix: oci,
                     vert_ix: ovi,
@@ -384,13 +397,15 @@ impl PhysicalContactGenerator {
                     .get_close_edges_to(ci, vi, rel_rgtps_per_cell)
                     .into_iter()
                 {
-                    close_points_per_vertex[vi].push(SimpleClosePoint {
+                    close_points_per_cell[ci][vi] = SimpleClosePoint {
+                        empty: false,
                         cell_ix: oci,
                         vert_ix: ovi,
                         vector_to,
                         smooth_factor,
                         edge_point_param
-                    });
+                    };
+                    //println!("added a simple close point: (vi: {}, n: {})", vi, close_points_per_vertex[vi].len());
                     match (self.params.cal_mag, crl) {
                         (Some(cal_mag), CrlEffect::Cal) => {
                             x_cals[vi] = smooth_factor * cal_mag;
@@ -429,7 +444,6 @@ impl PhysicalContactGenerator {
                         }
                     };
                 }
-                close_points_per_cell.push(close_points_per_vertex);
             }
         }
         PhysContactFactors {

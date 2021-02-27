@@ -78,7 +78,7 @@ pub struct Interactions {
     pub x_chem_attrs: [f64; NVERTS],
     pub x_coas: [f64; NVERTS],
     pub x_bdrys: [f64; NVERTS],
-    pub x_close_points: Vec<Vec<SimpleClosePoint>>,
+    pub x_close_points: [SimpleClosePoint; NVERTS],
 }
 
 /// Generates interaction related factors.
@@ -177,7 +177,7 @@ impl InteractionGenerator {
                 x_cals: cal[ci],
                 x_cils: cil[ci],
                 x_adhs: adh[ci],
-                x_close_points: close_points[ci].clone(),
+                x_close_points: close_points[ci],
                 x_chem_attrs: r_chemoas[ci],
                 x_coas: r_coas[ci],
                 x_bdrys: r_bdrys[ci],
