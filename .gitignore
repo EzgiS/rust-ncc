@@ -19,8 +19,9 @@ Cargo.lock
 # C extensions
 *.so
 
-# animation
+# animations and graphs
 *.mp4
+*.png
 
 # macos files to ignore
 .DS_Store
