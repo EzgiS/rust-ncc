@@ -1,26 +1,6 @@
 import matplotlib.pyplot as plt
-import json
 import numpy as np
-import json
 import cbor2
-
-output = None
-
-file_name = "../output/pair_cil=60_cal=None_adh=None_coa=24_seed=4_rt.cbor"
-
-snapshots = []
-with open(file_name, mode='rb') as sf:
-    world_history = cbor2.load(sf)
-    success = True
-    while success:
-        try:
-            snapshots += cbor2.load(sf)
-        except:
-            success = False
-
-tsteps = [s["tstep"] for s in snapshots]
-state_recs = [s["cells"] for s in snapshots]
-frequency = world_history["snap_freq"]
 
 
 def lookup_tstep_ix(tstep):
@@ -32,6 +12,7 @@ def v2ds_to_numpy(v2ds):
     for v2d in v2ds:
         vs.append([v2d['x'], v2d['y']])
     return np.array(vs)
+
 
 def v2d_to_numpy(v2d):
     v = [v2d['x'], v2d['y']]
@@ -57,6 +38,7 @@ def extract_v2ds_from_interactions(dat_key, state_recs):
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
 
+
 def extract_vector_to_close_points_from_interactions(state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
@@ -66,7 +48,7 @@ def extract_vector_to_close_points_from_interactions(state_recs):
             dat_per_vertex = []
             for vertex in x_close_points:
                 if vertex['empty']:
-                    vertex.append(np.array([np.nan, np.nan]))
+                    dat_per_vertex.append(np.array([np.nan, np.nan]))
                 else:
                     vector_to = vertex['vector_to']
                     dat_per_vertex.append(v2d_to_numpy(vector_to))
@@ -84,6 +66,7 @@ def extract_scalars(state_key, dat_key, state_recs):
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
 
+
 def extract_scalars_from_interactions(dat_key, state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
@@ -94,44 +77,67 @@ def extract_scalars_from_interactions(dat_key, state_recs):
     return np.array(dat_per_cell_per_tstep)
 
 
-poly_per_cell_per_tstep = extract_v2ds_from_cell_states('core', 'poly',
-                                                        state_recs)
-centroids_per_cell_per_tstep = np.array(
-    [[np.average(poly, axis=0) for poly in poly_per_cell] for poly_per_cell in
-     poly_per_cell_per_tstep])
-rac_acts_per_cell_per_tstep = extract_scalars('core', 'rac_acts', state_recs)
-rho_acts_per_cell_per_tstep = extract_scalars('core', 'rho_acts', state_recs)
+zs = ["true", "false"]
+seeds = ["None"]
+coas = ["24"]
+cils = [60]
+exp_names = ["pair"]
 
-adhs_per_cell_per_tstep = extract_v2ds_from_interactions('x_adhs', state_recs)
-rgtp_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
-                                                               "rgtp_forces",
-                                                               state_recs)
-edge_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
-                                                               "edge_forces",
-                                                               state_recs)
-cyto_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
-                                                               "cyto_forces",
-                                                               state_recs)
-sum_non_adh_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
-                                                                      "sum_forces",
-                                                                      state_recs)
-vector_to_close_point_per_cell_per_tstep = extract_vector_to_close_points_from_interactions(state_recs)
-magnitudes_of_close_point_vectors = np.linalg.norm(vector_to_close_point_per_cell_per_tstep, axis=3)
-cils_per_cell_per_tstep = extract_scalars_from_interactions('x_cils', state_recs)
+args = []
+for z in zs:
+    for coa in coas:
+        for seed in seeds:
+            for cil in cils:
+                for exp_name in exp_names:
+                    args.append([exp_name, cil, z, coa, seed])
 
+for arg_set in args:
+    exp_name, cil, z, coa, seed = arg_set
+    file_path_template = "../output/{exp_name}_cil={cil}_Z={z}_cal=None_adh=None_coa={coa}_seed={seed}{extra}.{ext}"
+    cbor_path = file_path_template.format(exp_name=exp_name, cil=cil, z=z, coa=coa, seed=seed, extra="", ext="cbor")
+    graph_path = file_path_template.format(exp_name=exp_name, cil=cil, z=z, coa=coa, seed=seed, extra="{extra}", ext="png")
+    snapshots = []
+    with open(cbor_path, mode='rb') as sf:
+        world_history = cbor2.load(sf)
+        success = True
+        while success:
+            try:
+                snapshots += cbor2.load(sf)
+            except:
+                success = False
 
-#
-# count = 0
-# for rec in state_recs:
-#     # first_set_of_rust_data = state_recs[0]
-#     interactions_selected_data = rec['interactions']
-#     for cell in interactions_selected_data:
-#         # cell_0_interactions_first_elem = interactions_selected_data[0]
-#         # print(cell_0_interactions_first_elem.keys())
-#         cell_close_points = cell['x_close_points']
-#         for vertex in cell_close_points:
-#             if not vertex["empty"]:
-#                 count += 1
-#             # cell_0_vertex_0_close_points = cell_close_points[0]
-#                 print(vertex)
-# print(count)
+    tsteps = [s["tstep"] for s in snapshots]
+    state_recs = [s["cells"] for s in snapshots]
+    frequency = world_history["snap_freq"]
+
+    poly_per_cell_per_tstep = extract_v2ds_from_cell_states('core', 'poly',
+                                                            state_recs)
+    centroids_per_cell_per_tstep = np.array(
+        [[np.average(poly, axis=0) for poly in poly_per_cell] for poly_per_cell in
+         poly_per_cell_per_tstep])
+    rac_acts_per_cell_per_tstep = extract_scalars('core', 'rac_acts', state_recs)
+    rho_acts_per_cell_per_tstep = extract_scalars('core', 'rho_acts', state_recs)
+
+    adhs_per_cell_per_tstep = extract_v2ds_from_interactions('x_adhs', state_recs)
+    rgtp_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
+                                                                   "rgtp_forces",
+                                                                   state_recs)
+    edge_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
+                                                                   "edge_forces",
+                                                                   state_recs)
+    cyto_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
+                                                                   "cyto_forces",
+                                                                   state_recs)
+    sum_non_adh_forces_per_cell_per_tstep = extract_v2ds_from_cell_states("mech",
+                                                                          "sum_forces",
+                                                                          state_recs)
+    vec_to_cp_per_c_per_s = extract_vector_to_close_points_from_interactions(state_recs)
+    mags_vec_to_cp_per_c_per_s = np.linalg.norm(vec_to_cp_per_c_per_s, axis=3)
+    cil_per_c_per_s = extract_scalars_from_interactions('x_cils', state_recs)/60.0
+    for vi in range(16):
+        plt.plot(tsteps[:], cil_per_c_per_s[:, 0, vi], marker=".", ls="")
+        plt.plot(tsteps[:], mags_vec_to_cp_per_c_per_s[:, 0, vi], marker=".", ls="")
+        plt.title("seed={}, z={}, coa={}, ci={}, vi={}".format(seed, z, coa, 0, vi))
+        plt.savefig(graph_path.format(extra="_ci={}_vi={}".format(0, vi)))
+        plt.close()
+

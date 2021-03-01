@@ -426,6 +426,7 @@ impl CoreState {
             &inter_state.x_coas,
             &inter_state.x_chem_attrs,
             &inter_state.x_cals,
+            &inter_state.x_cils,
             parameters.kgtp_rac,
             parameters.kgtp_rac_auto,
             parameters.halfmax_vertex_rgtp_conc,

@@ -388,6 +388,7 @@ impl PhysicalContactGenerator {
         for ci in 0..num_cells {
             let x_cals = &mut cal_per_cell[ci];
             let x_cils = &mut cil_per_cell[ci];
+            let mut n = 0;
             for vi in 0..NVERTS {
                 for CloseEdge {
                     cell_ix: oci,
@@ -409,15 +410,17 @@ impl PhysicalContactGenerator {
                             smooth_factor,
                             edge_point_param,
                         };
-                    //println!("added a simple close point: (vi: {}, n: {})", vi, close_points_per_vertex[vi].len());
+                    n += 1;
+                    //println!("close point (ci: {}, vi: {}, n: {}): d={}, s={}", ci, vi, n, vector_to.mag(), smooth_factor);
 
                     match (self.params.cal_mag, crl) {
                         (Some(cal_mag), CrlEffect::Cal) => {
                             x_cals[vi] = smooth_factor * cal_mag;
+                            //println!("x_cals[vi] = {}", x_cals[vi]);
                         }
                         (Some(_), CrlEffect::Cil) | (None, _) => {
-                            x_cils[vi] =
-                                smooth_factor * self.params.cil_mag;
+                            x_cils[vi] = smooth_factor * self.params.cil_mag;
+                            //println!("x_cils[vi] = {}", x_cils[vi]);
                         }
                     }
 

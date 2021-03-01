@@ -180,6 +180,7 @@ pub fn calc_kgtps_rac(
     x_coas: &[f64; NVERTS],
     x_chemoas: &[f64; NVERTS],
     x_cals: &[f64; NVERTS],
+    x_cils: &[f64; NVERTS],
     kgtp_rac_base: f64,
     kgtp_rac_auto: f64,
     halfmax_rac_conc: f64,

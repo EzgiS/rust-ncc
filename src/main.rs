@@ -7,13 +7,31 @@ use rust_ncc::{experiments, world, DEFAULT_OUTPUT_DIR};
 use std::path::PathBuf;
 use std::time::Instant;
 
+pub struct Args {
+    seed: Option<u64>,
+    z: bool,
+    coa: Option<f64>,
+}
+
 fn main() {
-    let seed_list: Vec<u64> = vec![4, 44, 444, 4444];
-    for seed in seed_list {
-        let mut rng = rand::thread_rng();
-        // let seed = 1111; //rng.sample(Uniform::new(0, 10000));
-        println!("seed: {}", seed);
-        let exp = experiments::pair::generate(Some(seed), true);
+    let mut args_vec: Vec<Args> = vec![];
+    for &seed in [None].iter() {
+        for &z in [true, false].iter() {
+            for &coa in [Some(24.0)].iter() {
+                args_vec.push(Args {
+                    seed,
+                    z,
+                    coa
+                })
+            }
+        }
+    }
+    for args in args_vec {
+        let Args {
+            seed, z, coa
+        } = args;
+        println!("seed: {:?}, z: {}, coa: {:?}", seed, z, coa);
+        let exp = experiments::pair::generate(z, coa, seed);
 
         let mut w = world::World::new(
             exp,

@@ -20,6 +20,7 @@ use crate::parameters::{
 use crate::utils::pcg32::Pcg32;
 use crate::NVERTS;
 use rand::SeedableRng;
+use rand_distr::num_traits::zero;
 
 /// Generate the group layout to use for this experiment.
 fn group_bbox(
@@ -115,6 +116,7 @@ fn raw_world_parameters(
     adh_mag: Option<f64>,
     cal_mag: Option<f64>,
     cil_mag: f64,
+    zero_at: bool,
     char_quants: &CharQuantities,
 ) -> RawWorldParameters {
     // Some(RawCoaParams {
@@ -129,6 +131,11 @@ fn raw_world_parameters(
     } else {
         None
     };
+    let zero_at_factor = if zero_at {
+        2.0
+    } else {
+        1.01
+    };
     RawWorldParameters {
         vertex_eta: gen_default_vertex_viscosity(char_quants),
         interactions: RawInteractionParams {
@@ -137,7 +144,7 @@ fn raw_world_parameters(
             bdry: None,
             phys_contact: RawPhysicalContactParams {
                 range: RawCloseBounds::new(
-                    one_at.mul_number(2.0),
+                    one_at.mul_number(zero_at_factor),
                     one_at,
                 ),
                 adh_mag,
@@ -150,8 +157,9 @@ fn raw_world_parameters(
 
 /// Generate the experiment, so that it can be run.
 pub fn generate(
+    zero_at: bool,
+    coa: Option<f64>,
     seed: Option<u64>,
-    randomization: bool,
 ) -> Experiment {
     let mut rng = match seed {
         Some(s) => Pcg32::seed_from_u64(s),
@@ -160,14 +168,13 @@ pub fn generate(
     let cil = 60.0;
     let cal: Option<f64> = None;
     let adh: Option<f64> = None;
-    let coa: Option<f64> = Some(24.0);
 
     let char_quants = gen_default_char_quants();
     let world_parameters =
-        raw_world_parameters(coa, adh, cal, cil, &char_quants)
+        raw_world_parameters(coa, adh, cal, cil, zero_at, &char_quants)
             .refine(&char_quants);
     let cell_groups =
-        cell_groups(&mut rng, &char_quants, randomization);
+        cell_groups(&mut rng, &char_quants, seed.map_or(false, |_| true));
 
     //convert the option into string
     let cal = if let Some(i) = cal {
@@ -194,13 +201,10 @@ pub fn generate(
         "None".to_string()
     };
 
-    let random_string =
-        if randomization == true { "rt" } else { "rf" };
-
     Experiment {
         file_name: format!(
-            "pair_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
-            cil, cal, adh, coa, seed_string, random_string
+            "pair_cil={}_Z={}_cal={}_adh={}_coa={}_seed={}",
+            cil, zero_at, cal, adh, coa, seed_string
         ),
         char_quants,
         world_parameters,
@@ -248,6 +252,7 @@ fn gen_default_raw_params(
         rng,
     )
     .unwrap();
+
     RawParameters {
         cell_diam: Length(40.0).micro(),
         stiffness_cortex: Stress(8.0).kilo(),
