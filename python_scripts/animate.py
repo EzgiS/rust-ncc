@@ -7,7 +7,7 @@ from matplotlib import animation
 
 output = None
 
-file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=24_seed=7_rt.cbor"
+file_name = "../output/pair_cil=60_cal=None_adh=None_coa=24_seed=7_rt.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -52,6 +52,15 @@ def extract_p2ds_from_interactions(dat_key, state_recs):
         dat_per_cell_per_tstep.append(np.array(dat_per_cell))
     return np.array(dat_per_cell_per_tstep)
 
+def extract_scalars_from_interactions(dat_key, state_recs):
+    dat_per_cell_per_tstep = []
+    for rec in state_recs:
+        dat_per_cell = []
+        for cell_rec in rec['interactions']:
+            dat_per_cell.append(np.array(cell_rec[dat_key]))
+        dat_per_cell_per_tstep.append(np.array(dat_per_cell))
+    return np.array(dat_per_cell_per_tstep)
+
 def extract_scalars(state_key, dat_key, state_recs):
     dat_per_cell_per_tstep = []
     for rec in state_recs:
@@ -77,6 +86,10 @@ rho_act_arrows_per_cell_per_tstep = 50 * rho_acts_per_cell_per_tstep[:, :, :,
                                          np.newaxis] * uivs_per_cell_per_tstep
 
 adhs_per_cell_per_tstep = 5*extract_p2ds_from_interactions('x_adhs', state_recs)
+
+coa_per_cell_per_tstep = extract_scalars_from_interactions('x_coas', state_recs)
+coa_arrows_per_cell_per_tstep = 5*coa_per_cell_per_tstep[:, :, :,
+                                         np.newaxis] * uovs_per_cell_per_tstep
 
 #
 # rho_acts_arrows_per_tstep = []
@@ -178,32 +191,44 @@ def paint(tstep_ix, fig, ax):
                     color=poly_color, linewidth=0.5)
             # ax.annotate(str(vix), (poly[vix, 0], poly[vix, 1]))
 
-    for poly, rac_act_arrows in zip(
+    # for poly, rac_act_arrows in zip(
+    #         poly_per_cell_per_tstep[tstep_ix],
+    #         rac_act_arrows_per_cell_per_tstep[tstep_ix]
+    # ):
+    #     for p, rac_arrow in zip(poly, rac_act_arrows):
+    #         ax.arrow(p[0], p[1], 3 * rac_arrow[0], 3 * rac_arrow[1], color="b",
+    #                  length_includes_head=True, head_width=0.0)
+    #
+    # for poly, rho_act_arrows in zip(poly_per_cell_per_tstep[tstep_ix],
+    #                                 rho_act_arrows_per_cell_per_tstep[
+    #                                     tstep_ix]):
+    #     for p, rho_arrow in zip(poly, rho_act_arrows):
+    #         ax.arrow(p[0], p[1], 3 * rho_arrow[0], 3 * rho_arrow[1], color="r",
+    #                  length_includes_head=True, head_width=0.0)
+    #
+    # for poly_ix, poly, adhs in zip(
+    #         np.arange(0, len(poly_per_cell_per_tstep[0])),
+    #         poly_per_cell_per_tstep[tstep_ix],
+    #         adhs_per_cell_per_tstep[tstep_ix]):
+    #     if poly_ix == 0:
+    #         adh_arrow_color = "magenta"
+    #     else:
+    #         adh_arrow_color = "cyan"
+    #     for p, adh in zip(poly, adhs):
+    #         ax.arrow(p[0], p[1], adh[0], adh[1], color=adh_arrow_color,
+    #                  length_includes_head=True, head_width=1.0)
+
+    for poly, coa_arrows in zip(
             poly_per_cell_per_tstep[tstep_ix],
-            rac_act_arrows_per_cell_per_tstep[tstep_ix]
+            coa_arrows_per_cell_per_tstep[tstep_ix]
     ):
-        for p, rac_arrow in zip(poly, rac_act_arrows):
-            ax.arrow(p[0], p[1], 3 * rac_arrow[0], 3 * rac_arrow[1], color="b",
+        for p, coa_arrows in zip(poly, coa_arrows):
+            ax.arrow(p[0], p[1], 1 * coa_arrows[0], 1 * coa_arrows[1], color="b",
                      length_includes_head=True, head_width=0.0)
 
-    for poly, rho_act_arrows in zip(poly_per_cell_per_tstep[tstep_ix],
-                                    rho_act_arrows_per_cell_per_tstep[
-                                        tstep_ix]):
-        for p, rho_arrow in zip(poly, rho_act_arrows):
-            ax.arrow(p[0], p[1], 3 * rho_arrow[0], 3 * rho_arrow[1], color="r",
-                     length_includes_head=True, head_width=0.0)
 
-    for poly_ix, poly, adhs in zip(
-            np.arange(0, len(poly_per_cell_per_tstep[0])),
-            poly_per_cell_per_tstep[tstep_ix],
-            adhs_per_cell_per_tstep[tstep_ix]):
-        if poly_ix == 0:
-            adh_arrow_color = "magenta"
-        else:
-            adh_arrow_color = "cyan"
-        for p, adh in zip(poly, adhs):
-            ax.arrow(p[0], p[1], adh[0], adh[1], color=adh_arrow_color,
-                     length_includes_head=True, head_width=1.0)
+
+
 
     ax.set_title("frame {}".format(tsteps[tstep_ix]))
     return ax.get_children()
@@ -229,5 +254,5 @@ cell_ani = animation.FuncAnimation(fig, paint, frames=tstep_ixs,
                                    fargs=(fig, ax),
                                    interval=1, blit=True)
 # name relevant to what you want your experiment title
-cell_ani.save('four_cell_cil=60_cal=None_adh=None_coa=24_seed=7_rt.mp4',
+cell_ani.save('pair_cil=60_cal=None_adh=None_coa=24_seed=7_rt.mp4',
               writer=writer)
