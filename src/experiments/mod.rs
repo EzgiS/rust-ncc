@@ -12,6 +12,7 @@ pub mod four_cell;
 pub mod n_cells;
 pub mod pair;
 pub mod separated_pair;
+pub mod single_cell;
 
 use crate::cell::chemistry::{
     DistributionScheme, DistributionType, RgtpDistribution,

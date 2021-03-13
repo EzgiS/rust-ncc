@@ -7,7 +7,7 @@ from matplotlib import animation
 
 output = None
 
-file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=0_seed=7_rt.cbor"
+file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=1_seed=7_rf.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -87,9 +87,9 @@ rho_act_arrows_per_cell_per_tstep = 50 * rho_acts_per_cell_per_tstep[:, :, :,
 
 adhs_per_cell_per_tstep = 5*extract_p2ds_from_interactions('x_adhs', state_recs)
 
-coa_per_cell_per_tstep = extract_scalars_from_interactions('x_coas', state_recs)
-coa_arrows_per_cell_per_tstep = 5*coa_per_cell_per_tstep[:, :, :,
-                                         np.newaxis] * uovs_per_cell_per_tstep
+# coa_per_cell_per_tstep = extract_scalars_from_interactions('x_coas', state_recs)
+# coa_arrows_per_cell_per_tstep = 5*coa_per_cell_per_tstep[:, :, :,
+#                                          np.newaxis] * uovs_per_cell_per_tstep
 
 #
 # rho_acts_arrows_per_tstep = []
@@ -181,7 +181,8 @@ def paint(tstep_ix, fig, ax):
             poly_color = "g"
             centroid_trail_color = (127 / 255, 191 / 255, 63 / 255)
 
-        # this_cell_centroids = centroids_per_cell_per_tstep[:tstep_ix, ci]
+        this_cell_centroids = centroids_per_cell_per_tstep[tstep_ix, ci]
+        ax.annotate(str(ci), this_cell_centroids)
         # ax.plot(this_cell_centroids[:,0], this_cell_centroids[:,1],
         # color=centroid_trail_color)
 
@@ -254,5 +255,5 @@ cell_ani = animation.FuncAnimation(fig, paint, frames=tstep_ixs,
                                    fargs=(fig, ax),
                                    interval=1, blit=True)
 # name relevant to what you want your experiment title
-cell_ani.save('four_cell_cil=60_cal=None_adh=None_coa=0_seed=7_rt.mp4',
+cell_ani.save('four_cell_cil=60_cal=None_adh=None_coa=1_seed=7_rf.mp4',
               writer=writer)

@@ -7,7 +7,7 @@ from matplotlib import animation
 
 output = None
 
-file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=24_seed=7_rt.cbor"
+file_name = "../output/single_cil=60_cal=None_adh=None_coa=12_seed=7_rf.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -220,5 +220,5 @@ cell_ani = animation.FuncAnimation(fig, paint, frames=tstep_ixs,
                                    fargs=(fig, ax),
                                    interval=1, blit=True)
 # name relevant to what you want your experiment title
-cell_ani.save('four_cell_cil=60_cal=None_adh=None_coa=24_seed=7_rt.mp4',
+cell_ani.save('single_cil=60_cal=None_adh=None_coa=12_seed=7_rf_centroid.mp4',
               writer=writer)

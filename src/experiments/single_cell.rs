@@ -122,14 +122,14 @@ pub fn generate(
     let cil = 60.0;
     let cal: Option<f64> = None;
     let adh: Option<f64> = None;
-    let coa: Option<f64> = Some(1.0);
+    let coa: Option<f64> = None;
 
     let char_quants = gen_default_char_quants();
     let world_parameters =
         raw_world_parameters(coa, adh, cal, cil, &char_quants)
             .refine(&char_quants);
     let cell_groups =
-        cell_groups(&mut rng, &char_quants, 4, randomization);
+        cell_groups(&mut rng, &char_quants, 1, randomization);
 
     //convert the option into string
     let cal = if let Some(i) = cal {
@@ -161,7 +161,7 @@ pub fn generate(
 
     Experiment {
         file_name: format!(
-            "four_cell_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
+            "single_cil={}_cal={}_adh={}_coa={}_seed={}_{}",
             cil, cal, adh, coa, seed_string, random_string
         ),
         char_quants,
