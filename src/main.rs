@@ -13,7 +13,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let seed = 7; //rng.sample(Uniform::new(0, 10000));
     println!("seed: {}", seed);
-    let exp = experiments::pair::generate(Some(seed), true);
+    let exp = experiments::four_cell::generate(Some(seed), true);
 
     let mut w = world::World::new(
         exp,

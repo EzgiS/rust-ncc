@@ -122,7 +122,7 @@ pub fn generate(
     let cil = 60.0;
     let cal: Option<f64> = None;
     let adh: Option<f64> = None;
-    let coa: Option<f64> = Some(24.0);
+    let coa: Option<f64> = Some(0.0);
 
     let char_quants = gen_default_char_quants();
     let world_parameters =
