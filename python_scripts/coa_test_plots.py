@@ -6,7 +6,7 @@ import cbor2
 
 output = None
 
-file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=1_seed=7_rf.cbor"
+file_name = "../output/four_cell_cil=60_cal=None_adh=None_coa=3_seed=7_rf.cbor"
 
 snapshots = []
 with open(file_name, mode='rb') as sf:
@@ -131,59 +131,59 @@ rac_cell_1 = rac_acts_per_cell_per_tstep[:, 1, :]
 rac_cell_2 = rac_acts_per_cell_per_tstep[:, 2, :]
 rac_cell_3 = rac_acts_per_cell_per_tstep[:, 3, :]
 
-rac_krgtp_cell_0 = coa_per_cell_per_tstep[:, 0, :]
-rac_krgtp_cell_1 = coa_per_cell_per_tstep[:, 1, :]
-rac_krgtp_cell_2 = coa_per_cell_per_tstep[:, 2, :]
-rac_krgtp_cell_3 = coa_per_cell_per_tstep[:, 3, :]
+rac_krgtp_cell_0 = rac_krgtp_per_cell_per_tstep[:, 0, :]
+rac_krgtp_cell_1 = rac_krgtp_per_cell_per_tstep[:, 1, :]
+rac_krgtp_cell_2 = rac_krgtp_per_cell_per_tstep[:, 2, :]
+rac_krgtp_cell_3 = rac_krgtp_per_cell_per_tstep[:, 3, :]
 
 coa_cell_0 = coa_per_cell_per_tstep[:, 0, :]
 coa_cell_1 = coa_per_cell_per_tstep[:, 1, :]
 coa_cell_2 = coa_per_cell_per_tstep[:, 2, :]
 coa_cell_3 = coa_per_cell_per_tstep[:, 3, :]
 
-plt.plot(tsteps, rac_cell_0, color="black", marker=".")
-plt.title('Rac acts on Cell 0')
-plt.show()
-
-plt.plot(tsteps, rac_cell_1, color="black", marker=".")
-plt.title('Rac acts on Cell 1')
-plt.show()
-
-plt.plot(tsteps, rac_cell_2, color="black", marker=".")
-plt.title('Rac acts on Cell 2')
-plt.show()
+# plt.plot(tsteps, rac_cell_0, color="black", marker=".")
+# plt.title('Rac acts on Cell 0')
+# plt.show()
+#
+# plt.plot(tsteps, rac_cell_1, color="black", marker=".")
+# plt.title('Rac acts on Cell 1')
+# plt.show()
+#
+# plt.plot(tsteps, rac_cell_2, color="black", marker=".")
+# plt.title('Rac acts on Cell 2')
+# plt.show()
 
 plt.plot(tsteps, rac_cell_3, color="black", marker=".")
 plt.title('Rac acts on Cell 3')
 plt.show()
 
-plt.plot(tsteps, rac_krgtp_cell_0, color="blue", marker=".")
-plt.title('rac_krgtp on Cell 0')
-plt.show()
-
-plt.plot(tsteps, rac_krgtp_cell_1, color="blue", marker=".")
-plt.title('rac_krgtp on Cell 1')
-plt.show()
-
-plt.plot(tsteps, rac_krgtp_cell_2, color="blue", marker=".")
-plt.title('rac_krgtp on Cell 2')
-plt.show()
+# plt.plot(tsteps, rac_krgtp_cell_0, color="blue", marker=".")
+# plt.title('rac_krgtp on Cell 0')
+# plt.show()
+#
+# plt.plot(tsteps, rac_krgtp_cell_1, color="blue", marker=".")
+# plt.title('rac_krgtp on Cell 1')
+# plt.show()
+#
+# plt.plot(tsteps, rac_krgtp_cell_2, color="blue", marker=".")
+# plt.title('rac_krgtp on Cell 2')
+# plt.show()
 
 plt.plot(tsteps, rac_krgtp_cell_3, color="blue", marker=".")
 plt.title('rac_krgtp on Cell 3')
 plt.show()
 
-plt.plot(tsteps, coa_cell_0, color="green", marker=".")
-plt.title('coa on Cell 0')
-plt.show()
-
-plt.plot(tsteps, coa_cell_1, color="green", marker=".")
-plt.title('coa on Cell 1')
-plt.show()
-
-plt.plot(tsteps, coa_cell_2, color="green", marker=".")
-plt.title('coa on Cell 2')
-plt.show()
+# plt.plot(tsteps, coa_cell_0, color="green", marker=".")
+# plt.title('coa on Cell 0')
+# plt.show()
+#
+# plt.plot(tsteps, coa_cell_1, color="green", marker=".")
+# plt.title('coa on Cell 1')
+# plt.show()
+#
+# plt.plot(tsteps, coa_cell_2, color="green", marker=".")
+# plt.title('coa on Cell 2')
+# plt.show()
 
 plt.plot(tsteps, coa_cell_3, color="green", marker=".")
 plt.title('coa on Cell 3')
