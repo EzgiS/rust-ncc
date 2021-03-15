@@ -8,17 +8,15 @@
 
 use crate::exp_setup::exp_parser::ExperimentArgs;
 use crate::math::v2d::V2d;
-use crate::parameters::{
-    CharQuantities, Parameters, WorldParameters,
-};
+use crate::parameters::{CharQuantities, Parameters, WorldParameters};
 use crate::utils::pcg32::Pcg32;
 use crate::world::IntegratorOpts;
 use crate::Directories;
 
 pub mod defaults;
-pub mod markers;
-//pub mod n_cells;
 pub mod exp_parser;
+pub mod markers;
+pub mod n_cells;
 pub mod pair;
 pub mod py_compare;
 
@@ -28,7 +26,9 @@ use std::path::PathBuf;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ExperimentType {
-    NCells,
+    NCells {
+        num_cells: usize,
+    },
     Pair {
         sep_in_cell_diams: usize,
     },
@@ -40,21 +40,12 @@ pub enum ExperimentType {
 
 /// Generate the experiment, so that it can be run.
 #[allow(clippy::too_many_arguments)]
-pub fn generate(
-    dirs: Directories,
-    args: ExperimentArgs,
-) -> Vec<Experiment> {
+pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
     dirs.make();
     match &args.ty {
-        ExperimentType::NCells => {
-            unimplemented!()
-        }
-        ExperimentType::Pair { .. } => {
-            pair::generate(dirs, args.into())
-        }
-        ExperimentType::PyCompare { .. } => {
-            py_compare::generate(dirs, args.into())
-        }
+        ExperimentType::NCells { .. } => n_cells::generate(dirs, args),
+        ExperimentType::Pair { .. } => pair::generate(dirs, args),
+        ExperimentType::PyCompare { .. } => py_compare::generate(dirs, args),
     }
 }
 

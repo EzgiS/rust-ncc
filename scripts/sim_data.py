@@ -333,6 +333,7 @@ class SimulationData:
         self.fig_probe.canvas.draw()
 
     def paint_animation(self, snap_ix, ax):
+        print("animating frame: {}".format(snap_ix))
         ax.cla()
         ax.set_aspect("equal")
 

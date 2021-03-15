@@ -1,9 +1,8 @@
 use crate::cell::chemistry::{distrib_gens, RgtpDistribution};
 use crate::exp_setup::defaults::RAW_COA_PARAMS_WITH_ZERO_MAG;
 use crate::exp_setup::exp_parser::ExperimentArgs;
-use crate::exp_setup::markers::mark_between_angles;
 use crate::exp_setup::{defaults, CellGroup, Experiment, ExperimentType, GroupBBox};
-use crate::math::radians::{Radians, RAD_0, RAD_PI};
+use crate::mark_verts;
 use crate::math::v2d::V2d;
 use crate::parameters::quantity::{Length, Quantity};
 use crate::parameters::{
@@ -14,25 +13,19 @@ use crate::Directories;
 use rand::SeedableRng;
 
 /// Generate the group bounding box to use for this experiment.
-fn group_bbox(
-    num_cells: usize,
-    char_quants: &CharQuantities,
-    bottom_left: (Length, Length),
-    width: usize,
-    height: usize,
-) -> Result<GroupBBox, String> {
-    // specify initial location of group bottom left
-    let bottom_left = V2d {
-        x: char_quants.normalize(&bottom_left.0),
-        y: char_quants.normalize(&bottom_left.1),
+fn group_bbox(num_cells: usize, char_quants: &CharQuantities) -> Result<GroupBBox, String> {
+    // specify initial location of group centroid
+    let centroid = V2d {
+        x: char_quants.normalize(&Length(0.0)),
+        y: char_quants.normalize(&Length(0.0)),
     };
+    let side_len = (num_cells as f64).sqrt();
     let r = GroupBBox {
-        width,
-        height,
-        bottom_left,
+        width: side_len.ceil() as usize,
+        height: (num_cells as f64 / side_len).ceil() as usize,
+        bottom_left: centroid,
     };
-
-    if r.width * r.height > num_cells {
+    if r.width * r.height < num_cells {
         Err(String::from(
             "Group layout area is too small to contain required number of cells.",
         ))
@@ -41,22 +34,15 @@ fn group_bbox(
     }
 }
 
-fn raw_params(
-    rng: &mut Pcg32,
-    randomization: bool,
-    rac_bounds: (Radians, Radians),
-    rho_bounds: (Radians, Radians),
-) -> RawParameters {
-    let rac_marks = mark_between_angles(rac_bounds);
+fn raw_params(rng: &mut Pcg32, randomization: bool) -> RawParameters {
     let init_rac = RgtpDistribution::new(
-        distrib_gens::specific_random(rng, 0.1, rac_marks),
-        distrib_gens::random(rng, 0.1),
+        distrib_gens::specific_uniform(0.1, mark_verts!(0, 1, 2, 3)),
+        distrib_gens::specific_uniform(0.1, mark_verts!(0, 1, 2, 3)),
     );
 
-    let rho_marks = mark_between_angles(rho_bounds);
     let init_rho = RgtpDistribution::new(
-        distrib_gens::specific_random(rng, 0.1, rho_marks),
-        distrib_gens::random(rng, 0.1),
+        distrib_gens::specific_uniform(0.1, mark_verts!(8, 9, 10, 11)),
+        distrib_gens::specific_uniform(0.1, mark_verts!(8, 9, 10, 11)),
     );
 
     defaults::RAW_PARAMS
@@ -65,61 +51,18 @@ fn raw_params(
         .modify_init_rho(init_rho)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn make_cell_group(
-    rng: &mut Pcg32,
-    char_quants: &CharQuantities,
-    randomization: bool,
-    rac_bounds: (Radians, Radians),
-    rho_bounds: (Radians, Radians),
-    bot_left: (Length, Length),
-    num_cells: usize,
-    box_width: usize,
-    box_height: usize,
-) -> CellGroup {
-    let raw_params = raw_params(rng, randomization, rac_bounds, rho_bounds);
-    let parameters = raw_params.refine(char_quants);
-    CellGroup {
-        num_cells,
-        layout: group_bbox(num_cells, char_quants, bot_left, box_width, box_height).unwrap(),
-        parameters,
-    }
-}
-
 /// Define the cell groups that will exist in this experiment.
 fn make_cell_groups(
     rng: &mut Pcg32,
     char_quants: &CharQuantities,
+    num_cells: usize,
     randomization: bool,
-    sep_in_cell_diams: usize,
 ) -> Vec<CellGroup> {
-    let group_zero = make_cell_group(
-        rng,
-        char_quants,
-        randomization,
-        (*RAD_0, *RAD_PI),
-        (*RAD_PI, *RAD_0),
-        (Length(0.0), Length(0.0)),
-        1,
-        1,
-        1,
-    );
-    let group_one = make_cell_group(
-        rng,
-        char_quants,
-        randomization,
-        (*RAD_PI, *RAD_0),
-        (*RAD_0, *RAD_PI),
-        (
-            Length(0.0),
-            defaults::CELL_DIAMETER.scale(sep_in_cell_diams as f64),
-        ),
-        1,
-        1,
-        1,
-    );
-
-    vec![group_zero, group_one]
+    vec![CellGroup {
+        num_cells,
+        layout: group_bbox(num_cells, char_quants).unwrap(),
+        parameters: raw_params(rng, randomization).refine(char_quants),
+    }]
 }
 
 pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
@@ -137,11 +80,15 @@ pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
         int_opts,
     } = args;
 
-    let sep_in_cell_diams = if let ExperimentType::Pair { sep_in_cell_diams } = &ty {
-        *sep_in_cell_diams
+    let num_cells = if let ExperimentType::NCells { num_cells } = &ty {
+        *num_cells
     } else {
-        panic!("Expected a Pair experiment, but got: {:?}", ty)
+        panic!("Expected an n_cell experiment, but got: {:?}", ty)
     };
+    println!("cil_mag: {:?}", cil_mag);
+    println!("coa_mag: {:?}", coa_mag);
+    println!("cal_mag: {:?}", cal_mag);
+    println!("adh_scale: {:?}", adh_scale);
 
     seeds
         .iter()
@@ -167,8 +114,24 @@ pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
                         cil_mag,
                     },
                 });
+            println!(
+                "raw_world_params.interactions.cil: {:?}",
+                raw_world_params.interactions.phys_contact.cil_mag
+            );
+            println!(
+                "raw_world_params.interactions.coa: {:?}",
+                raw_world_params.interactions.coa
+            );
+            println!(
+                "raw_world_params.interactions.cal: {:?}",
+                raw_world_params.interactions.phys_contact.cal_mag
+            );
+            println!(
+                "raw_world_params.interactions.adh: {:?}",
+                raw_world_params.interactions.phys_contact.adh_mag
+            );
             let world_params = raw_world_params.refine(&char_quants);
-            let cgs = make_cell_groups(&mut rng, &char_quants, randomization, sep_in_cell_diams);
+            let cgs = make_cell_groups(&mut rng, &char_quants, num_cells, randomization);
 
             let seed_string = seed.map_or(String::from("None"), |s| format!("{}", s));
 

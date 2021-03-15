@@ -10,6 +10,8 @@ class AniOpts:
         self.label_cells = label_cells
         self.show_trails = show_trails
         self.follow_group = follow_group
+
+        # These cannot yet be turned on/off using .toml
         self.poly_line_style = "-"
 
     def description(self):
