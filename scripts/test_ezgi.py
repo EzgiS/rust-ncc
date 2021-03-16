@@ -8,7 +8,7 @@ import toml
 
 run_experiments = True
 root_dir = os.getcwd()
-exp_tomls = ["four_cell"]
+exp_tomls = ["pair_adh_10_coa_12_diam_1", "pair_coa_12_diam_1"]
 for exp_toml in exp_tomls:
     exec_mode = "release"
     exec_path = os.path.join(root_dir, "target", exec_mode, "executor")
