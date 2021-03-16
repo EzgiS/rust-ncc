@@ -262,7 +262,7 @@ class SimulationData:
             c_centers = self.centroids_per_c_per_s[:snap_ix, ci]
             if self.ani_opts.show_trails:
                 ax.plot(c_centers[:, 0], c_centers[:, 1])
-            if self.ani_opts.label_cells:
+            if self.ani_opts.label_cells and c_centers.shape[0] > 0:
                 ax.annotate(str(ci), (c_centers[-1, 0], c_centers[-1, 1]))
 
         for poly, rac_act_arrows in zip(
