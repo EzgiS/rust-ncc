@@ -2,7 +2,7 @@ use crate::cell::chemistry::{distrib_gens, RgtpDistribution};
 use crate::exp_setup::defaults::RAW_COA_PARAMS_WITH_ZERO_MAG;
 use crate::exp_setup::exp_parser::ExperimentArgs;
 use crate::exp_setup::{defaults, CellGroup, Experiment, ExperimentType, GroupBBox};
-use crate::mark_verts;
+// use crate::mark_verts;
 use crate::math::v2d::V2d;
 use crate::parameters::quantity::{Length, Quantity};
 use crate::parameters::{
@@ -36,13 +36,13 @@ fn group_bbox(num_cells: usize, char_quants: &CharQuantities) -> Result<GroupBBo
 
 fn raw_params(rng: &mut Pcg32, randomization: bool) -> RawParameters {
     let init_rac = RgtpDistribution::new(
-        distrib_gens::specific_uniform(0.1, mark_verts!(0, 1, 2, 3)),
-        distrib_gens::specific_uniform(0.1, mark_verts!(0, 1, 2, 3)),
+        distrib_gens::random(rng, 0.1),
+        distrib_gens::random(rng, 0.1),
     );
 
     let init_rho = RgtpDistribution::new(
-        distrib_gens::specific_uniform(0.1, mark_verts!(8, 9, 10, 11)),
-        distrib_gens::specific_uniform(0.1, mark_verts!(8, 9, 10, 11)),
+        distrib_gens::random(rng, 0.1),
+        distrib_gens::random(rng, 0.1),
     );
 
     defaults::RAW_PARAMS
