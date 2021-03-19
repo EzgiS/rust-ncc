@@ -186,6 +186,7 @@ impl CoaGenerator {
     pub fn new(
         cell_polys: &[Poly],
         params: CoaParams,
+        close_dist_cutoff: f64,
     ) -> CoaGenerator {
         let num_cells = cell_polys.len();
         let contact_bbs = cell_polys
@@ -204,15 +205,17 @@ impl CoaGenerator {
                 for (vi, v) in poly.verts.iter().enumerate() {
                     for (ovi, ov) in opoly.verts.iter().enumerate() {
                         let lseg = LineSeg2D::new(v, ov);
-                        dat.set(
-                            ci,
-                            vi,
-                            oci,
-                            ovi,
-                            calc_pair_info(
-                                ci, vi, oci, ovi, lseg, cell_polys,
-                            ),
-                        )
+                        if lseg.vector.mag() > close_dist_cutoff {
+                            dat.set(
+                                ci,
+                                vi,
+                                oci,
+                                ovi,
+                                calc_pair_info(
+                                    ci, vi, oci, ovi, lseg, cell_polys,
+                                ),
+                            );
+                        }
                     }
                 }
             }
@@ -225,7 +228,7 @@ impl CoaGenerator {
         }
     }
 
-    pub fn update(&mut self, ci: usize, cell_polys: &[Poly]) {
+    pub fn update(&mut self, ci: usize, cell_polys: &[Poly], close_cutoff: f64) {
         let this_poly = cell_polys[ci];
         let bb = this_poly.bbox.expand_by(self.params.halfmax_dist);
         self.contact_bbs[ci] = bb;
@@ -242,15 +245,17 @@ impl CoaGenerator {
             for (vi, v) in this_poly.verts.iter().enumerate() {
                 for (ovi, ov) in other_poly.verts.iter().enumerate() {
                     let lseg = LineSeg2D::new(v, ov);
-                    self.dat.set(
-                        ci,
-                        vi,
-                        oci,
-                        ovi,
-                        calc_pair_info(
-                            ci, vi, oci, ovi, lseg, cell_polys,
-                        ),
-                    );
+                    if lseg.vector.mag() > close_cutoff {
+                        self.dat.set(
+                            ci,
+                            vi,
+                            oci,
+                            ovi,
+                            calc_pair_info(
+                                ci, vi, oci, ovi, lseg, cell_polys,
+                            ),
+                        );
+                    }
                 }
             }
         }

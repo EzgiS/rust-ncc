@@ -56,7 +56,7 @@ class Environment:
         self.curr_tpoint = 0
         self.t = params["t"]
         self.dt = 1.0
-        self.num_tsteps = int(np.ceil(params["final_t"]/self.t))
+        self.num_tsteps = int(np.ceil(params["final_t"] / self.t))
         self.num_tpoints = self.num_tsteps + 1
         self.timepoints = np.arange(0, self.num_tpoints)
         self.num_int_steps = params["num_int_steps"]
