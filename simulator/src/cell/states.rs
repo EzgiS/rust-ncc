@@ -537,6 +537,7 @@ impl Core {
             &conc_rac_acts,
             &rac_rand_state.x_rands,
             &interactions.x_coas,
+            &interactions.x_cils,
             &interactions.x_chem_attrs,
             &interactions.x_cals,
             parameters.kgtp_rac,
