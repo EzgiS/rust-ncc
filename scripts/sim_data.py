@@ -112,8 +112,8 @@ class SimulationData:
         self.rho_act_arrows_per_c_per_s = \
             self.rho_acts_per_c_per_s[:, :, :, np.newaxis] * \
             self.uivs_per_c_per_s
-        self.rgtps_arrow_group = [(100.0, "b", self.rac_act_arrows_per_c_per_s),
-                                  (100.0, "r", self.rho_act_arrows_per_c_per_s)]
+        self.rgtps_arrow_group = [(300.0, "b", self.rac_act_arrows_per_c_per_s),
+                                  (300.0, "r", self.rho_act_arrows_per_c_per_s)]
 
         self.x_cils_arrows_per_c_per_s = \
             self.x_cils_per_c_per_s[:, :, :, np.newaxis] * \

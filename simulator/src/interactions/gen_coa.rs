@@ -212,7 +212,8 @@ impl CoaGenerator {
                                 oci,
                                 ovi,
                                 calc_pair_info(
-                                    ci, vi, oci, ovi, lseg, cell_polys,
+                                    ci, vi, oci, ovi, lseg,
+                                    cell_polys,
                                 ),
                             );
                         }
@@ -228,7 +229,12 @@ impl CoaGenerator {
         }
     }
 
-    pub fn update(&mut self, ci: usize, cell_polys: &[Poly], close_cutoff: f64) {
+    pub fn update(
+        &mut self,
+        ci: usize,
+        cell_polys: &[Poly],
+        close_cutoff: f64,
+    ) {
         let this_poly = cell_polys[ci];
         let bb = this_poly.bbox.expand_by(self.params.halfmax_dist);
         self.contact_bbs[ci] = bb;
@@ -245,20 +251,14 @@ impl CoaGenerator {
             for (vi, v) in this_poly.verts.iter().enumerate() {
                 for (ovi, ov) in other_poly.verts.iter().enumerate() {
                     let lseg = LineSeg2D::new(v, ov);
-                    //println!("close cutoff: {}", close_cutoff);
+                    println!("close cutoff: {}", close_cutoff);
                     if lseg.vector.mag() > close_cutoff {
                         let pair_info = calc_pair_info(
                             ci, vi, oci, ovi, lseg, cell_polys,
                         );
-                        //println!("{} > close_cutoff; storing calc_pair_info: {:#?}", lseg.vector
-                        //    .mag(), pair_info);
-                        self.dat.set(
-                            ci,
-                            vi,
-                            oci,
-                            ovi,
-                            pair_info,
-                        );
+                        println!("{} > close_cutoff; storing calc_pair_info: {:#?}", lseg.vector
+                           .mag(), pair_info);
+                        self.dat.set(ci, vi, oci, ovi, pair_info);
                     }
                 }
             }
