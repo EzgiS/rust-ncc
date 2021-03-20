@@ -9,7 +9,7 @@ use crate::utils::circ_ix_minus;
 use crate::NVERTS;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Serialize, Debug)]
 pub struct VertexPairInfo {
     dist: f64,
     num_intersects: f64,
@@ -245,15 +245,19 @@ impl CoaGenerator {
             for (vi, v) in this_poly.verts.iter().enumerate() {
                 for (ovi, ov) in other_poly.verts.iter().enumerate() {
                     let lseg = LineSeg2D::new(v, ov);
+                    //println!("close cutoff: {}", close_cutoff);
                     if lseg.vector.mag() > close_cutoff {
+                        let pair_info = calc_pair_info(
+                            ci, vi, oci, ovi, lseg, cell_polys,
+                        );
+                        //println!("{} > close_cutoff; storing calc_pair_info: {:#?}", lseg.vector
+                        //    .mag(), pair_info);
                         self.dat.set(
                             ci,
                             vi,
                             oci,
                             ovi,
-                            calc_pair_info(
-                                ci, vi, oci, ovi, lseg, cell_polys,
-                            ),
+                            pair_info,
                         );
                     }
                 }
