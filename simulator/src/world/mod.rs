@@ -55,16 +55,16 @@ impl Default for EulerOpts {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
-pub struct Rkdp5Opts {
+pub struct RkOpts {
     pub max_iters: usize,
     pub atol: f64,
     pub rtol: f64,
     pub init_h_scale: f64,
 }
 
-impl Default for Rkdp5Opts {
+impl Default for RkOpts {
     fn default() -> Self {
-        Rkdp5Opts {
+        RkOpts {
             max_iters: 20,
             atol: 1e-3,
             rtol: 1e-3,
@@ -77,12 +77,12 @@ impl Default for Rkdp5Opts {
 pub enum IntegratorOpts {
     Euler(EulerOpts),
     EulerDebug(EulerOpts),
-    Rkdp5(Rkdp5Opts),
+    Rkdp5(RkOpts),
 }
 
 impl Default for IntegratorOpts {
     fn default() -> Self {
-        IntegratorOpts::Rkdp5(Rkdp5Opts::default())
+        IntegratorOpts::Rkdp5(RkOpts::default())
     }
 }
 
@@ -94,9 +94,18 @@ impl WorldCells {
         world_parameters: &WorldParameters,
         group_parameters: &[Parameters],
         interaction_generator: &mut InteractionGenerator,
-        int_opts: Rkdp5Opts,
+        int_opts: RkOpts,
     ) -> Result<WorldCells, String> {
         let mut new_cells = self.cells.clone();
+        let mut rel_rgtps = new_cells
+            .iter()
+            .map(|c| {
+                c.core.calc_relative_rgtp_activity(
+                    &group_parameters[c.group_ix],
+                )
+            })
+            .collect::<Vec<[RelativeRgtpActivity; NVERTS]>>();
+        let mut interactions = self.interactions.clone();
         let shuffled_cells = {
             let mut crs = self.cells.iter().collect::<Vec<&Cell>>();
             crs.shuffle(rng);
@@ -105,13 +114,14 @@ impl WorldCells {
         let dt = 1.0;
         for cells in shuffled_cells {
             let ci = cells.ix;
+
             let contact_data =
                 interaction_generator.get_contact_data(ci);
 
             let new_cell = cells.simulate_rkdp5(
                 tpoint,
                 dt,
-                &self.interactions[ci],
+                &interactions[ci],
                 contact_data,
                 world_parameters,
                 &group_parameters[cells.group_ix],
@@ -119,22 +129,20 @@ impl WorldCells {
                 int_opts,
             )?;
 
+            rel_rgtps[ci] =
+                new_cell.core.calc_relative_rgtp_activity(
+                    &group_parameters[new_cell.group_ix],
+                );
             interaction_generator.update(ci, &new_cell.core.poly);
+            interactions = interaction_generator.generate(&rel_rgtps);
 
             new_cells[ci] = new_cell;
         }
-        let rel_rgtps = new_cells
-            .iter()
-            .map(|c| {
-                c.core.calc_relative_rgtp_activity(
-                    &group_parameters[c.group_ix],
-                )
-            })
-            .collect::<Vec<[RelativeRgtpActivity; NVERTS]>>();
+        // println!("-----------------------");
         Ok(WorldCells {
             tpoint: tpoint + dt,
             cells: new_cells,
-            interactions: interaction_generator.generate(&rel_rgtps),
+            interactions,
         })
     }
 
@@ -305,6 +313,7 @@ impl World {
             out_dir,
             py_main,
             name,
+            run_python,
             ..
         } = experiment;
         let normed_final_t = char_quants.normalize(&final_t);
@@ -339,6 +348,7 @@ impl World {
             execute_py_model(
                 &out_dir,
                 &pm,
+                run_python,
                 &name,
                 final_t.number(),
                 snap_period.number(),
@@ -447,7 +457,7 @@ impl World {
     }
 
     pub fn periodic_save(&mut self, last_saved: f64) -> f64 {
-        if (self.state.tpoint - last_saved) > self.snap_period {
+        if (self.state.tpoint - last_saved) >= self.snap_period {
             if let Some(writer) = &mut self.writer {
                 writer.push(self.state.clone());
             }
@@ -479,11 +489,11 @@ impl World {
     pub fn simulate_rkdp5(
         &mut self,
         save_cbor: bool,
-        int_opts: Rkdp5Opts,
+        int_opts: RkOpts,
     ) {
         // Save initial state.
         self.save_state();
-        let mut last_saved = self.state.tpoint;
+        let mut last_saved = 0.0;
         while self.state.tpoint < self.final_t {
             let new_cells: WorldCells = self
                 .state
@@ -648,10 +658,10 @@ pub fn gen_cell_centroids(
         };
         let row_delta = V2d {
             x: 0.0,
-            y: 2.0 * cell_r,
+            y: 2.0 * cell_r + 0.02 * cell_r,
         };
         let col_delta = V2d {
-            x: 2.0 * cell_r,
+            x: 2.0 * cell_r + 0.02 * cell_r,
             y: 0.0,
         };
         for ix in 0..*num_cells {

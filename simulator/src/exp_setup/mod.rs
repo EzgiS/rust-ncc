@@ -8,10 +8,12 @@
 
 use crate::exp_setup::exp_parser::ExperimentArgs;
 use crate::math::v2d::V2d;
-use crate::parameters::{CharQuantities, Parameters, WorldParameters};
+use crate::parameters::{
+    CharQuantities, Parameters, WorldParameters,
+};
 use crate::utils::pcg32::Pcg32;
 use crate::world::IntegratorOpts;
-use crate::Directories;
+use crate::{Directories, NVERTS};
 
 pub mod defaults;
 pub mod exp_parser;
@@ -20,6 +22,10 @@ pub mod n_cells;
 pub mod pair;
 pub mod py_compare;
 
+use crate::cell::chemistry::distrib_gens::{
+    random, specific_random, specific_uniform,
+};
+use crate::exp_setup::markers::mark_verts;
 use crate::parameters::quantity::Time;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -31,21 +37,80 @@ pub enum ExperimentType {
     },
     Pair {
         sep_in_cell_diams: usize,
+        rgtp_distrib_defs_per_cell: PairRgtpDistribDefs,
     },
     PyCompare {
         num_cells: usize,
+        run_python: Option<bool>,
         py_main: Option<PathBuf>,
     },
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum DistribDef {
+    Random { frac: f64 },
+    SpecificRandom { frac: f64, marked_verts: Vec<usize> },
+    SpecificUniform { frac: f64, marked_verts: Vec<usize> },
+}
+
+impl DistribDef {
+    pub fn to_distrib(&self, rng: &mut Pcg32) -> [f64; NVERTS] {
+        match self {
+            DistribDef::Random { frac } => random(rng, *frac),
+            DistribDef::SpecificRandom { frac, marked_verts } => {
+                specific_random(rng, *frac, mark_verts(&marked_verts))
+            }
+            DistribDef::SpecificUniform { frac, marked_verts } => {
+                specific_uniform(*frac, mark_verts(&marked_verts))
+            }
+        }
+    }
+}
+
+impl Default for DistribDef {
+    fn default() -> Self {
+        DistribDef::Random { frac: 0.1 }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+pub struct RgtpDistribDef {
+    pub acts: DistribDef,
+    pub inacts: DistribDef,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+pub struct RgtpDistribDefs {
+    pub rac: RgtpDistribDef,
+    pub rho: RgtpDistribDef,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+pub struct PairRgtpDistribDefs {
+    pub cell0: RgtpDistribDefs,
+    pub cell1: RgtpDistribDefs,
+}
+
+impl Default for ExperimentType {
+    fn default() -> Self {
+        ExperimentType::NCells { num_cells: 1 }
+    }
+}
+
 /// Generate the experiment, so that it can be run.
-#[allow(clippy::too_many_arguments)]
-pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
+pub fn generate(
+    dirs: Directories,
+    args: ExperimentArgs,
+) -> Vec<Experiment> {
     dirs.make();
     match &args.ty {
-        ExperimentType::NCells { .. } => n_cells::generate(dirs, args),
+        ExperimentType::NCells { .. } => {
+            n_cells::generate(dirs, args)
+        }
         ExperimentType::Pair { .. } => pair::generate(dirs, args),
-        ExperimentType::PyCompare { .. } => py_compare::generate(dirs, args),
+        ExperimentType::PyCompare { .. } => {
+            py_compare::generate(dirs, args)
+        }
     }
 }
 
@@ -88,10 +153,11 @@ pub struct Experiment {
     pub rng: Pcg32,
     /// Seed that was used to initialize rng, if it generated from a
     /// seed.
-    pub seed: Option<u64>,
+    pub seed: u64,
     pub snap_period: Time,
     pub max_on_ram: usize,
     pub int_opts: IntegratorOpts,
     pub out_dir: PathBuf,
     pub py_main: Option<PathBuf>,
+    pub run_python: bool,
 }

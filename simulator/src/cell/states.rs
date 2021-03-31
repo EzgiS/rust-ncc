@@ -10,7 +10,7 @@ use crate::cell::mechanics::{
 use crate::interactions::{
     ContactData, Interactions, RelativeRgtpActivity,
 };
-use crate::math::geometry::check_strong_intersection;
+use crate::math::geometry::{lsegs_intersect, LineSeg2D, Poly};
 use crate::math::v2d::{SqP2d, V2d};
 use crate::math::{hill_function3, max_f64};
 use crate::parameters::{Parameters, WorldParameters};
@@ -537,6 +537,7 @@ impl Core {
             &conc_rac_acts,
             &rac_rand_state.x_rands,
             &interactions.x_coas,
+            &interactions.x_cils,
             &interactions.x_chem_attrs,
             &interactions.x_cals,
             parameters.kgtp_rac,
@@ -644,7 +645,14 @@ impl Core {
                 chem_state.kdgtps_rac[i] * self.rac_acts[i];
             let activated_rac =
                 chem_state.kgtps_rac[i] * self.rac_inacts[i];
+            let inactivated_rho =
+                chem_state.kdgtps_rho[i] * self.rho_acts[i];
+            let activated_rho =
+                chem_state.kgtps_rho[i] * self.rho_inacts[i];
+
             let delta_rac_activated = activated_rac - inactivated_rac;
+            let delta_rho_activated = activated_rho - inactivated_rho;
+
             let rac_cyto_exchange = {
                 let rac_mem_on =
                     parameters.k_mem_on_vertex * chem_state.rac_cyto;
@@ -652,21 +660,6 @@ impl Core {
                     parameters.k_mem_off * self.rac_inacts[i];
                 rac_mem_on - rac_mem_off
             };
-            let vertex_rac_act_flux =
-                chem_state.rac_act_net_fluxes[i];
-            let vertex_rac_inact_flux =
-                chem_state.rac_inact_net_fluxes[i];
-            delta.rac_acts[i] =
-                delta_rac_activated + vertex_rac_act_flux;
-            delta.rac_inacts[i] = rac_cyto_exchange
-                + vertex_rac_inact_flux
-                - delta_rac_activated;
-
-            let inactivated_rho =
-                chem_state.kdgtps_rho[i] * self.rho_acts[i];
-            let activated_rho =
-                chem_state.kgtps_rho[i] * self.rho_inacts[i];
-            let delta_rho_activated = activated_rho - inactivated_rho;
             let rho_cyto_exchange = {
                 let rho_mem_on =
                     parameters.k_mem_on_vertex * chem_state.rho_cyto;
@@ -674,10 +667,21 @@ impl Core {
                     parameters.k_mem_off * self.rho_inacts[i];
                 rho_mem_on - rho_mem_off
             };
+
+            let vertex_rac_act_flux =
+                chem_state.rac_act_net_fluxes[i];
+            let vertex_rac_inact_flux =
+                chem_state.rac_inact_net_fluxes[i];
             let vertex_rho_act_flux =
                 chem_state.rho_act_net_fluxes[i];
             let vertex_rho_inact_flux =
                 chem_state.rho_inact_net_fluxes[i];
+
+            delta.rac_acts[i] =
+                delta_rac_activated + vertex_rac_act_flux;
+            delta.rac_inacts[i] = rac_cyto_exchange
+                + vertex_rac_inact_flux
+                - delta_rac_activated;
             delta.rho_acts[i] =
                 delta_rho_activated + vertex_rho_act_flux;
             delta.rho_inacts[i] = rho_cyto_exchange
@@ -842,29 +846,53 @@ impl Core {
         // println!("{}: successfully validated", loc_str)
     }
 
+    pub fn strict_enforce_volume_exclusion(
+        &mut self,
+        old_vs: &[V2d; NVERTS],
+        contacts: &[ContactData],
+    ) -> Result<(), VolExErr> {
+        confirm_volume_exclusion(&old_vs, &contacts, "old_vs")
+            .map_err(VolExErr::OldVs)?;
+
+        self.enforce_volume_exclusion(old_vs, contacts);
+
+        // confirm_volume_exclusion(&self.poly, &contacts, "new_vs")
+        //     .map_err(VolExErr::NewVs)?;
+        Ok(())
+    }
+
     pub fn enforce_volume_exclusion(
         &mut self,
         old_vs: &[V2d; NVERTS],
         contacts: &[ContactData],
-    ) -> Result<(), String> {
-        #[cfg(feature = "validate")]
-        confirm_volume_exclusion(&old_vs, &contacts, "old_vs")?;
-
-        #[allow(clippy::needless_range_loop)]
+    ) {
         for vi in 0..NVERTS {
+            let ui = circ_ix_minus(vi, NVERTS);
+            let wi = circ_ix_plus(vi, NVERTS);
+            let u = self.poly[ui];
+            let v = self.poly[vi];
+            let w = self.poly[wi];
+            let old_u = old_vs[ui];
             let old_v = old_vs[vi];
-            let new_v = self.poly[vi];
-            let new_u = self.poly[circ_ix_minus(vi, NVERTS)];
-            let new_w = self.poly[circ_ix_plus(vi, NVERTS)];
-            self.poly[vi] = move_point_out(
-                &new_u, new_v, &new_w, old_v, &contacts, 20,
-            );
+            let old_w = old_vs[wi];
+            for contact in contacts {
+                for other in contact.poly.edges.iter() {
+                    if lsegs_intersect(&v, &w, other)
+                        || lsegs_intersect(&u, &v, other)
+                    {
+                        let (new_u, new_v, new_w) =
+                            fix_edge_intersection(
+                                (old_u, old_v, old_w),
+                                (u, v, w),
+                                other,
+                            );
+                        self.poly[ui] = new_u;
+                        self.poly[vi] = new_v;
+                        self.poly[wi] = new_w;
+                    }
+                }
+            }
         }
-
-        #[cfg(feature = "validate")]
-        confirm_volume_exclusion(&self.poly, &contacts, "new_vs")?;
-
-        Ok(())
     }
 
     //TODO(BM): automate generation of `num_vars` using proc macro.
@@ -896,46 +924,55 @@ impl Core {
 
 fn violates_volume_exclusion(
     test_v: &V2d,
-    test_u: &V2d,
     test_w: &V2d,
     contacts: &[ContactData],
-) -> bool {
-    let point_pairs = [(test_u, test_v), (test_v, test_w)];
-    for (p0, p1) in point_pairs.iter() {
-        for cd in contacts.iter() {
-            for edge in cd.poly.edges.iter() {
-                if check_strong_intersection(p0, p1, edge) {
-                    return true;
-                }
+) -> Option<(Poly, V2d, V2d)> {
+    for contact in contacts {
+        for other in contact.poly.edges.iter() {
+            if lsegs_intersect(test_v, test_w, other) {
+                return Some((contact.poly, other.p0, other.p1));
             }
         }
     }
-    false
+    None
 }
 
-fn move_point_out(
-    new_u: &V2d,
-    mut new_v: V2d,
-    new_w: &V2d,
-    mut good_v: V2d,
-    contacts: &[ContactData],
-    num_iters: u32,
-) -> V2d {
-    let mut n = 0;
-    while n < num_iters {
-        let test_v = 0.5 * (good_v + new_v);
-        if violates_volume_exclusion(&test_v, new_u, new_w, contacts)
+fn fix_edge_intersection(
+    good_uvw: (V2d, V2d, V2d),
+    new_uvw: (V2d, V2d, V2d),
+    other: &LineSeg2D,
+) -> (V2d, V2d, V2d) {
+    let num_divs = 6;
+    let d = 1.0 / (num_divs as f64);
+    let (good_u, good_v, good_w) = good_uvw;
+    let (new_u, new_v, new_w) = new_uvw;
+    let (delta_u, delta_v, delta_w) = (
+        (new_u - good_u).scale(d),
+        (new_v - good_v).scale(d),
+        (new_w - good_w).scale(d),
+    );
+    let mut n = 1;
+    loop {
+        let (test_u, test_v, test_w) = (
+            new_u - delta_u.scale(n as f64),
+            new_v - delta_v.scale(n as f64),
+            new_w - delta_w.scale(n as f64),
+        );
+        if lsegs_intersect(&test_u, &test_v, other)
+            || lsegs_intersect(&test_v, &test_w, other)
         {
-            new_v = test_v;
+            n += 1;
         } else {
-            good_v = test_v;
+            return (test_u, test_v, test_w);
         }
-        n += 1;
     }
-    good_v
 }
 
-#[cfg(feature = "validate")]
+pub enum VolExErr {
+    OldVs(String),
+    NewVs(String),
+}
+
 pub fn confirm_volume_exclusion(
     vs: &[V2d; NVERTS],
     contacts: &[ContactData],
@@ -943,20 +980,24 @@ pub fn confirm_volume_exclusion(
 ) -> Result<(), String> {
     use crate::math::v2d::poly_to_string;
     for (vi, v) in vs.iter().enumerate() {
-        let u = &vs[circ_ix_minus(vi, NVERTS)];
-        let w = &vs[circ_ix_plus(vi, NVERTS)];
-        for ContactData { poly, .. } in contacts {
-            if violates_volume_exclusion(v, u, w, contacts) {
-                return Err(format!(
-                    "{} violates volume exclusion.\n\
-                    vs[{}] = {}, \n\
-                    other poly = {}",
-                    msg,
-                    vi,
-                    v,
-                    &poly_to_string(&poly.verts)
-                ));
-            }
+        let wi = circ_ix_plus(vi, NVERTS);
+        let w = vs[wi];
+        if let Some((p, a, b)) =
+            violates_volume_exclusion(v, &w, contacts)
+        {
+            return Err(format!(
+                "{} violates volume exclusion.\n\
+                    vs = {}, \n\
+                    other poly = {}  \n\
+                    this_vs = {} \n\
+                    a = {}, b = {}",
+                msg,
+                v,
+                &poly_to_string(&p.verts),
+                &poly_to_string(vs),
+                a,
+                b,
+            ));
         }
     }
     Ok(())

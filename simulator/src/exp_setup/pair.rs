@@ -1,13 +1,15 @@
-use crate::cell::chemistry::{distrib_gens, RgtpDistribution};
+use crate::cell::chemistry::RgtpDistribution;
 use crate::exp_setup::defaults::RAW_COA_PARAMS_WITH_ZERO_MAG;
 use crate::exp_setup::exp_parser::ExperimentArgs;
-use crate::exp_setup::markers::mark_between_angles;
-use crate::exp_setup::{defaults, CellGroup, Experiment, ExperimentType, GroupBBox};
-use crate::math::radians::{Radians, RAD_0, RAD_PI};
+use crate::exp_setup::{
+    defaults, CellGroup, Experiment, ExperimentType, GroupBBox,
+    PairRgtpDistribDefs, RgtpDistribDefs,
+};
 use crate::math::v2d::V2d;
 use crate::parameters::quantity::{Length, Quantity};
 use crate::parameters::{
-    CharQuantities, RawCloseBounds, RawInteractionParams, RawParameters, RawPhysicalContactParams,
+    CharQuantities, RawInteractionParams, RawParameters,
+    RawPhysicalContactParams,
 };
 use crate::utils::pcg32::Pcg32;
 use crate::Directories;
@@ -32,7 +34,7 @@ fn group_bbox(
         bottom_left,
     };
 
-    if r.width * r.height > num_cells {
+    if r.width * r.height < num_cells {
         Err(String::from(
             "Group layout area is too small to contain required number of cells.",
         ))
@@ -43,20 +45,18 @@ fn group_bbox(
 
 fn raw_params(
     rng: &mut Pcg32,
+    rgtp_distrib_defs: &RgtpDistribDefs,
     randomization: bool,
-    rac_bounds: (Radians, Radians),
-    rho_bounds: (Radians, Radians),
 ) -> RawParameters {
-    let rac_marks = mark_between_angles(rac_bounds);
-    let init_rac = RgtpDistribution::new(
-        distrib_gens::specific_random(rng, 0.1, rac_marks),
-        distrib_gens::random(rng, 0.1),
-    );
+    let RgtpDistribDefs { rac, rho } = rgtp_distrib_defs;
 
-    let rho_marks = mark_between_angles(rho_bounds);
+    let init_rac = RgtpDistribution::new(
+        rac.acts.to_distrib(rng),
+        rac.inacts.to_distrib(rng),
+    );
     let init_rho = RgtpDistribution::new(
-        distrib_gens::specific_random(rng, 0.1, rho_marks),
-        distrib_gens::random(rng, 0.1),
+        rho.acts.to_distrib(rng),
+        rho.inacts.to_distrib(rng),
     );
 
     defaults::RAW_PARAMS
@@ -65,23 +65,29 @@ fn raw_params(
         .modify_init_rho(init_rho)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn make_cell_group(
     rng: &mut Pcg32,
     char_quants: &CharQuantities,
     randomization: bool,
-    rac_bounds: (Radians, Radians),
-    rho_bounds: (Radians, Radians),
+    rgtp_distrib_defs: &RgtpDistribDefs,
     bot_left: (Length, Length),
     num_cells: usize,
     box_width: usize,
     box_height: usize,
 ) -> CellGroup {
-    let raw_params = raw_params(rng, randomization, rac_bounds, rho_bounds);
+    let raw_params =
+        raw_params(rng, rgtp_distrib_defs, randomization);
     let parameters = raw_params.refine(char_quants);
     CellGroup {
         num_cells,
-        layout: group_bbox(num_cells, char_quants, bot_left, box_width, box_height).unwrap(),
+        layout: group_bbox(
+            num_cells,
+            char_quants,
+            bot_left,
+            box_width,
+            box_height,
+        )
+        .unwrap(),
         parameters,
     }
 }
@@ -90,6 +96,7 @@ fn make_cell_group(
 fn make_cell_groups(
     rng: &mut Pcg32,
     char_quants: &CharQuantities,
+    rgtp_distrib_defs_per_cell: &PairRgtpDistribDefs,
     randomization: bool,
     sep_in_cell_diams: usize,
 ) -> Vec<CellGroup> {
@@ -97,8 +104,7 @@ fn make_cell_groups(
         rng,
         char_quants,
         randomization,
-        (*RAD_0, *RAD_PI),
-        (*RAD_PI, *RAD_0),
+        &rgtp_distrib_defs_per_cell.cell0,
         (Length(0.0), Length(0.0)),
         1,
         1,
@@ -108,8 +114,7 @@ fn make_cell_groups(
         rng,
         char_quants,
         randomization,
-        (*RAD_PI, *RAD_0),
-        (*RAD_0, *RAD_PI),
+        &rgtp_distrib_defs_per_cell.cell1,
         (
             Length(0.0),
             defaults::CELL_DIAMETER.scale(sep_in_cell_diams as f64),
@@ -122,59 +127,78 @@ fn make_cell_groups(
     vec![group_zero, group_one]
 }
 
-pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
+pub fn generate(
+    dirs: Directories,
+    args: ExperimentArgs,
+) -> Vec<Experiment> {
     let ExperimentArgs {
-        toml_name,
+        file_name: toml_name,
         ty,
         final_t,
+        char_t,
         cil_mag,
         coa_mag,
         cal_mag,
+        crl_one_at,
+        zero_at,
+        too_close_dist,
         adh_scale,
+        adh_break,
         snap_period,
         max_on_ram,
+        randomization,
         seeds,
         int_opts,
+        ..
     } = args;
-
-    let sep_in_cell_diams = if let ExperimentType::Pair { sep_in_cell_diams } = &ty {
-        *sep_in_cell_diams
-    } else {
-        panic!("Expected a Pair experiment, but got: {:?}", ty)
-    };
+    let (sep_in_cell_diams, rgtp_distrib_defs_per_cell) =
+        if let ExperimentType::Pair {
+            sep_in_cell_diams,
+            rgtp_distrib_defs_per_cell,
+        } = &ty
+        {
+            (*sep_in_cell_diams, rgtp_distrib_defs_per_cell.clone())
+        } else {
+            panic!("Expected a Pair experiment, but got: {:?}", ty)
+        };
 
     seeds
         .iter()
         .map(|&seed| {
-            let (mut rng, randomization) = match seed {
-                Some(s) => (Pcg32::seed_from_u64(s), true),
-                None => (Pcg32::from_entropy(), false),
-            };
+            let mut rng = Pcg32::seed_from_u64(seed);
 
-            let char_quants = *defaults::CHAR_QUANTS;
-            let raw_world_params =
-                defaults::RAW_WORLD_PARAMS.modify_interactions(RawInteractionParams {
-                    coa: coa_mag.map(|mag| RAW_COA_PARAMS_WITH_ZERO_MAG.modify_mag(mag)),
+            let char_quants = defaults::CHAR_QUANTS.modify_t(char_t);
+            let raw_world_params = defaults::RAW_WORLD_PARAMS
+                .modify_interactions(RawInteractionParams {
+                    coa: coa_mag.map(|mag| {
+                        RAW_COA_PARAMS_WITH_ZERO_MAG
+                            .modify_mag(mag)
+                            .modify_too_close_dist(too_close_dist)
+                    }),
                     chem_attr: None,
                     bdry: None,
                     phys_contact: RawPhysicalContactParams {
-                        range: RawCloseBounds {
-                            zero_at: defaults::PHYS_CLOSE_DIST.scale(2.0),
-                            one_at: *defaults::PHYS_CLOSE_DIST,
-                        },
-                        adh_mag: adh_scale.map(|x| defaults::ADH_MAG.scale(x)),
+                        zero_at,
+                        crl_one_at,
+                        adh_mag: adh_scale
+                            .map(|x| defaults::ADH_MAG.scale(x)),
+                        adh_break,
                         cal_mag,
                         cil_mag,
                     },
                 });
             let world_params = raw_world_params.refine(&char_quants);
-            let cgs = make_cell_groups(&mut rng, &char_quants, randomization, sep_in_cell_diams);
-
-            let seed_string = seed.map_or(String::from("None"), |s| format!("{}", s));
+            let cgs = make_cell_groups(
+                &mut rng,
+                &char_quants,
+                &rgtp_distrib_defs_per_cell,
+                randomization,
+                sep_in_cell_diams,
+            );
 
             Experiment {
                 ty: ty.clone(),
-                name: format!("{}_seed={}", toml_name, seed_string),
+                name: format!("{}_seed={}", toml_name, seed),
                 final_t,
                 char_quants,
                 world_params,
@@ -186,6 +210,7 @@ pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
                 int_opts,
                 out_dir: (&dirs.out).clone(),
                 py_main: None,
+                run_python: false,
             }
         })
         .collect()

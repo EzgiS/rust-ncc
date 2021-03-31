@@ -165,7 +165,6 @@ pub struct Writer {
 }
 
 impl Writer {
-    #[allow(clippy::too_many_arguments)]
     pub fn init(
         &mut self,
         out_dir: PathBuf,
@@ -332,13 +331,11 @@ impl Writer {
             close_zero_at: world_params
                 .interactions
                 .phys_contact
-                .range
                 .zero_at,
             close_one_at: world_params
                 .interactions
                 .phys_contact
-                .range
-                .one_at,
+                .crl_one_at,
             cil_mag: world_params.interactions.phys_contact.cil_mag,
             coa_los_penalty: world_params
                 .interactions

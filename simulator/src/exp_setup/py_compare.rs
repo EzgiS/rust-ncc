@@ -5,18 +5,19 @@ use crate::exp_setup::{
 use crate::math::v2d::V2d;
 use crate::parameters::quantity::{Length, Quantity};
 use crate::parameters::{
-    CharQuantities, RawCloseBounds, RawInteractionParams,
-    RawParameters, RawPhysicalContactParams,
+    CharQuantities, RawInteractionParams, RawParameters,
+    RawPhysicalContactParams,
 };
-use crate::utils::pcg32::Pcg32;
-use crate::{Directories, NVERTS};
-use rand::SeedableRng;
+use crate::Directories;
 
 use crate::exp_setup::defaults::{
-    ADH_MAG, CHAR_QUANTS, PHYS_CLOSE_DIST,
-    RAW_COA_PARAMS_WITH_ZERO_MAG, RAW_PARAMS, RAW_WORLD_PARAMS,
+    ADH_MAG, CHAR_QUANTS, RAW_COA_PARAMS_WITH_ZERO_MAG, RAW_PARAMS,
+    RAW_WORLD_PARAMS,
 };
 use crate::exp_setup::exp_parser::ExperimentArgs;
+use crate::exp_setup::markers::mark_verts;
+use crate::utils::pcg32::Pcg32;
+use rand::SeedableRng;
 
 /// Generate the group layout to use for this experiment.
 fn group_bbox(
@@ -25,9 +26,12 @@ fn group_bbox(
     raw_params: &RawParameters,
 ) -> Result<GroupBBox, String> {
     // specify initial location of group centroid
+    let inter_group_sep = char_quants
+        .normalize(&raw_params.cell_diam.scale(0.5 * 0.02));
     let bottom_left = V2d {
         x: char_quants
-            .normalize(&raw_params.cell_diam.scale(group_ix as f64)),
+            .normalize(&raw_params.cell_diam.scale(group_ix as f64))
+            + inter_group_sep * (group_ix as f64),
         y: char_quants.normalize(&Length(0.0)),
     };
     let r = GroupBBox {
@@ -45,12 +49,8 @@ fn group_bbox(
 }
 
 fn raw_params(group_ix: usize, randomization: bool) -> RawParameters {
-    #![allow(unused_attributes)]
-    #[macro_use]
-    use crate::mark_verts;
-
-    let right = mark_verts!(0, 1, 2, 3);
-    let left = mark_verts!(8, 9, 10, 11);
+    let right = mark_verts(&[0, 1, 2, 3]);
+    let left = mark_verts(&[8, 9, 10, 11]);
 
     let (specific_rac, specific_rho) = match group_ix {
         0 => (right, left),
@@ -72,7 +72,6 @@ fn raw_params(group_ix: usize, randomization: bool) -> RawParameters {
         .modify_init_rho(init_rho)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn make_cell_group(
     group_ix: usize,
     char_quants: &CharQuantities,
@@ -109,53 +108,66 @@ pub fn generate(
     let ExperimentArgs {
         ty,
         final_t,
+        char_t,
         cil_mag,
         coa_mag,
         adh_scale,
+        adh_break,
         cal_mag,
+        crl_one_at,
+        zero_at,
+        too_close_dist,
+        randomization,
         seeds,
-        toml_name,
+        file_name: toml_name,
         snap_period,
         max_on_ram,
         int_opts,
+        ..
     } = args;
 
-    let (num_cells, py_main) =
-        if let ExperimentType::PyCompare { num_cells, py_main } = &ty
+    let (num_cells, py_main, run_python) =
+        if let ExperimentType::PyCompare {
+            num_cells,
+            py_main,
+            run_python,
+        } = &ty
         {
             (
                 *num_cells,
                 py_main.as_ref().unwrap_or(&dirs.py_main).clone(),
+                run_python.unwrap_or(true),
             )
         } else {
-            panic!(format!(
+            panic!(
+                "{}",
+                format!(
             "expected ExperimentType::PyCompare, instead found: {:?}",
             ty
-        ));
+        )
+            );
         };
 
     seeds
         .iter()
         .map(|&seed| {
-            let (rng, randomization) = match seed {
-                Some(s) => (Pcg32::seed_from_u64(s), true),
-                None => (Pcg32::from_entropy(), false),
-            };
+            let rng = Pcg32::seed_from_u64(seed);
 
-            let char_quants = *CHAR_QUANTS;
+            let char_quants = CHAR_QUANTS.modify_t(char_t);
             let raw_world_params = RAW_WORLD_PARAMS
                 .modify_interactions(RawInteractionParams {
                     coa: coa_mag.map(|mag| {
-                        RAW_COA_PARAMS_WITH_ZERO_MAG.modify_mag(mag)
+                        RAW_COA_PARAMS_WITH_ZERO_MAG
+                            .modify_mag(mag)
+                            .modify_too_close_dist(too_close_dist)
                     }),
                     chem_attr: None,
                     bdry: None,
                     phys_contact: RawPhysicalContactParams {
-                        range: RawCloseBounds {
-                            zero_at: PHYS_CLOSE_DIST.scale(3.0),
-                            one_at: *PHYS_CLOSE_DIST,
-                        },
+                        zero_at,
+                        crl_one_at,
                         adh_mag: adh_scale.map(|x| ADH_MAG.scale(x)),
+                        adh_break,
                         cal_mag,
                         cil_mag,
                     },
@@ -167,15 +179,9 @@ pub fn generate(
                 num_cells,
             );
 
-            let seed_string = if let Some(i) = seed {
-                i.to_string()
-            } else {
-                "None".to_string()
-            };
-
             Experiment {
                 ty: (&ty).clone(),
-                name: format!("{}_seed={}", toml_name, seed_string,),
+                name: format!("{}_seed={}", toml_name, seed,),
                 final_t,
                 char_quants,
                 world_params,
@@ -187,6 +193,7 @@ pub fn generate(
                 int_opts,
                 out_dir: (&dirs.out).clone(),
                 py_main: Some(py_main.clone()),
+                run_python,
             }
         })
         .collect()

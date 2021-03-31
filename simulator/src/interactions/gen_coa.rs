@@ -1,9 +1,8 @@
 use crate::interactions::dat_sym2d::SymCcDat;
 use crate::interactions::dat_sym4d::SymCcVvDat;
-use crate::interactions::generate_contacts;
-use crate::math::geometry::{
-    BBox, CheckIntersectResult, LineSeg2D, Poly,
-};
+use crate::interactions::gen_contact_matrix;
+use crate::interactions::gen_phys::PhysicalContactGenerator;
+use crate::math::geometry::{BBox, LineSeg2D, Poly};
 use crate::parameters::CoaParams;
 use crate::utils::circ_ix_minus;
 use crate::NVERTS;
@@ -28,7 +27,7 @@ impl VertexPairInfo {
 pub struct CoaGenerator {
     dat: SymCcVvDat<VertexPairInfo>,
     contact_bbs: Vec<BBox>,
-    contacts: SymCcDat<bool>,
+    contact_matrix: SymCcDat<bool>,
     params: CoaParams,
 }
 
@@ -52,14 +51,8 @@ pub fn check_other_poly_intersect(
 ) -> bool {
     if lseg.intersects_bbox(&poly.bbox) {
         for edge in poly.edges.iter() {
-            match lseg.check_intersection(edge) {
-                CheckIntersectResult::No
-                | CheckIntersectResult::Unknown => {
-                    continue;
-                }
-                _ => {
-                    return true;
-                }
+            if lseg.check_intersection(edge) {
+                return true;
             }
         }
     }
@@ -80,72 +73,29 @@ pub fn check_root_poly_intersect(
     vi_a: usize,
     vi_b: usize,
 ) -> bool {
-    let (ignore_mi, ignore_i) = (circ_ix_minus(vi_a, NVERTS), vi_a);
+    let ui_a = circ_ix_minus(vi_a, NVERTS);
     for (ei, edge) in poly_a.edges.iter().enumerate() {
-        match lseg.check_intersection(edge) {
-            CheckIntersectResult::No
-            | CheckIntersectResult::Unknown => {
-                continue;
-            }
-            CheckIntersectResult::Strong
-            | CheckIntersectResult::Self1OnOther0
-            | CheckIntersectResult::Self1OnOther1 => {
-                return true;
-            }
-            CheckIntersectResult::Self0OnOther0 => {
-                if ei == ignore_i {
-                    continue;
-                } else {
-                    return true;
-                }
-            }
-            CheckIntersectResult::Self0OnOther1 => {
-                if ei == ignore_mi {
-                    continue;
-                } else {
-                    return true;
-                }
-            }
+        if ei != vi_a && ei != ui_a && edge.check_intersection(lseg) {
+            return true;
         }
     }
 
-    let (ignore_mi, ignore_i) = (circ_ix_minus(vi_b, NVERTS), vi_b);
+    let ui_b = circ_ix_minus(vi_b, NVERTS);
     for (ei, edge) in poly_b.edges.iter().enumerate() {
-        match lseg.check_intersection(edge) {
-            CheckIntersectResult::No
-            | CheckIntersectResult::Unknown => {
-                continue;
-            }
-            CheckIntersectResult::Strong
-            | CheckIntersectResult::Self0OnOther0
-            | CheckIntersectResult::Self0OnOther1 => {
-                return true;
-            }
-            CheckIntersectResult::Self1OnOther0 => {
-                if ei == ignore_i {
-                    continue;
-                } else {
-                    return true;
-                }
-            }
-            CheckIntersectResult::Self1OnOther1 => {
-                if ei == ignore_mi {
-                    continue;
-                } else {
-                    return true;
-                }
-            }
+        if ei != vi_b && ei != ui_b && edge.check_intersection(lseg) {
+            return true;
         }
     }
+
     false
 }
 
 /// Calculate clearance and distance.
 pub fn calc_pair_info(
     ci: usize,
-    skip_vi: usize,
+    vi: usize,
     oci: usize,
-    skip_ovi: usize,
+    ovi: usize,
     lseg: LineSeg2D,
     cell_polys: &[Poly],
 ) -> VertexPairInfo {
@@ -153,8 +103,8 @@ pub fn calc_pair_info(
         &lseg,
         &cell_polys[ci],
         &cell_polys[oci],
-        skip_vi,
-        skip_ovi,
+        vi,
+        ovi,
     ) {
         return VertexPairInfo {
             dist: lseg.len,
@@ -186,33 +136,52 @@ impl CoaGenerator {
     pub fn new(
         cell_polys: &[Poly],
         params: CoaParams,
+        phys_contact_generator: &PhysicalContactGenerator,
     ) -> CoaGenerator {
         let num_cells = cell_polys.len();
         let contact_bbs = cell_polys
             .iter()
             .map(|cp| cp.bbox.expand_by(2.0 * params.halfmax_dist))
             .collect::<Vec<BBox>>();
-        let contacts = generate_contacts(&contact_bbs);
+        let contact_matrix = gen_contact_matrix(&contact_bbs);
         let mut dat =
             SymCcVvDat::empty(num_cells, VertexPairInfo::infinity());
 
         for (ci, poly) in cell_polys.iter().enumerate() {
-            for (ocj, opoly) in
-                cell_polys[(ci + 1)..].iter().enumerate()
-            {
-                let oci = (ci + 1) + ocj;
-                for (vi, v) in poly.verts.iter().enumerate() {
+            for (vi, v) in poly.verts.iter().enumerate() {
+                for (ocj, opoly) in
+                    cell_polys[(ci + 1)..].iter().enumerate()
+                {
+                    let oci = (ci + 1) + ocj;
                     for (ovi, ov) in opoly.verts.iter().enumerate() {
-                        let lseg = LineSeg2D::new(v, ov);
-                        dat.set(
-                            ci,
-                            vi,
-                            oci,
-                            ovi,
-                            calc_pair_info(
-                                ci, vi, oci, ovi, lseg, cell_polys,
-                            ),
-                        )
+                        if !(phys_contact_generator
+                            .min_dist_to(ci, vi)
+                            < params.too_close_dist_sq
+                            || phys_contact_generator
+                                .min_dist_to(oci, ovi)
+                                < params.too_close_dist_sq)
+                            && contact_matrix.get(ci, oci)
+                        {
+                            let lseg = LineSeg2D::new(v, ov);
+                            dat.set(
+                                ci,
+                                vi,
+                                oci,
+                                ovi,
+                                calc_pair_info(
+                                    ci, vi, oci, ovi, lseg,
+                                    cell_polys,
+                                ),
+                            );
+                        } else {
+                            dat.set(
+                                ci,
+                                vi,
+                                oci,
+                                ovi,
+                                VertexPairInfo::infinity(),
+                            );
+                        }
                     }
                 }
             }
@@ -220,44 +189,65 @@ impl CoaGenerator {
         CoaGenerator {
             dat,
             contact_bbs,
-            contacts,
+            contact_matrix,
             params,
         }
     }
 
-    pub fn update(&mut self, ci: usize, cell_polys: &[Poly]) {
-        let this_poly = cell_polys[ci];
-        let bb = this_poly.bbox.expand_by(self.params.halfmax_dist);
+    pub fn update(
+        &mut self,
+        ci: usize,
+        cell_polys: &[Poly],
+        phys_contact_generator: &PhysicalContactGenerator,
+    ) {
+        let poly = cell_polys[ci];
+        let bb = poly.bbox.expand_by(self.params.halfmax_dist);
         self.contact_bbs[ci] = bb;
         // Update contacts.
         for (oci, obb) in self.contact_bbs.iter().enumerate() {
             if oci != ci {
-                self.contacts.set(ci, oci, obb.intersects(&bb))
+                self.contact_matrix.set(ci, oci, obb.intersects(&bb))
             }
         }
-        for (oci, other_poly) in cell_polys.iter().enumerate() {
-            if oci == ci || !self.contacts.get(ci, oci) {
-                continue;
-            }
-            for (vi, v) in this_poly.verts.iter().enumerate() {
-                for (ovi, ov) in other_poly.verts.iter().enumerate() {
-                    let lseg = LineSeg2D::new(v, ov);
-                    self.dat.set(
-                        ci,
-                        vi,
-                        oci,
-                        ovi,
-                        calc_pair_info(
-                            ci, vi, oci, ovi, lseg, cell_polys,
-                        ),
-                    );
+        for (vi, v) in poly.verts.iter().enumerate() {
+            for (ocj, opoly) in
+                cell_polys[(ci + 1)..].iter().enumerate()
+            {
+                let oci = (ci + 1) + ocj;
+                for (ovi, ov) in opoly.verts.iter().enumerate() {
+                    if !(phys_contact_generator.min_dist_to(ci, vi)
+                        < self.params.too_close_dist_sq
+                        || phys_contact_generator
+                            .min_dist_to(oci, ovi)
+                            < self.params.too_close_dist_sq)
+                        && self.contact_matrix.get(ci, oci)
+                    {
+                        let lseg = LineSeg2D::new(v, ov);
+                        self.dat.set(
+                            ci,
+                            vi,
+                            oci,
+                            ovi,
+                            calc_pair_info(
+                                ci, vi, oci, ovi, lseg, cell_polys,
+                            ),
+                        );
+                    } else {
+                        self.dat.set(
+                            ci,
+                            vi,
+                            oci,
+                            ovi,
+                            VertexPairInfo::infinity(),
+                        );
+                    }
                 }
             }
         }
     }
 
     pub fn generate(&self) -> Vec<[f64; NVERTS]> {
-        let num_cells = self.contacts.num_cells;
+        let num_cells = self.contact_matrix.num_cells;
         let mut all_x_coas = vec![[0.0f64; NVERTS]; num_cells];
         let CoaParams {
             los_penalty,
@@ -290,14 +280,14 @@ impl CoaGenerator {
                 }
             }
         }
-        let mut max_coa = 0.0;
-        for x_coas in all_x_coas.iter() {
-            for &x_coa in x_coas.iter() {
-                if x_coa > max_coa {
-                    max_coa = x_coa;
-                }
-            }
-        }
+        // let mut max_coa = 0.0;
+        // for x_coas in all_x_coas.iter() {
+        //     for &x_coa in x_coas.iter() {
+        //         if x_coa > max_coa {
+        //             max_coa = x_coa;
+        //         }
+        //     }
+        // }
         //println!("{}", max_coa);
         all_x_coas
     }

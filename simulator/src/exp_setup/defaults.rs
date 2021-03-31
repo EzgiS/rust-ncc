@@ -4,9 +4,8 @@ use crate::parameters::quantity::{
     Force, General, Length, Quantity, Stress, Time, Tinv, Viscosity,
 };
 use crate::parameters::{
-    CharQuantities, RawCloseBounds, RawCoaParams,
-    RawInteractionParams, RawParameters, RawPhysicalContactParams,
-    RawWorldParameters,
+    CharQuantities, RawCoaParams, RawInteractionParams,
+    RawParameters, RawPhysicalContactParams, RawWorldParameters,
 };
 use crate::NVERTS;
 use once_cell::sync::Lazy;
@@ -42,6 +41,7 @@ pub static CHAR_QUANTS: Lazy<CharQuantities> =
 
 pub static MAX_CELL_V: Lazy<General> =
     Lazy::new(|| Length(3.0).micro().g() * Tinv(1.0 / 60.0).g());
+pub const ADH_INDEX: f64 = 0.99;
 pub static ADH_MAG: Lazy<Force> = Lazy::new(|| {
     (CHAR_VISCOSITY.g() * (*MAX_CELL_V))
         .scale(1.0 / NVERTS as f64)
@@ -72,7 +72,7 @@ pub static RAW_PARAMS: Lazy<RawParameters> = Lazy::new(|| {
         halfmax_rgtp_frac: 0.4,
         lm_ss: Stress(10.0).kilo(),
         rho_friction: 0.2,
-        stiffness_cyto: Force(1e-5),
+        stiffness_cyto: Force(1e-7),
         diffusion_rgtp: rgtp_d,
         k_mem_off: Tinv(0.15),
         k_mem_on: Tinv(0.02),
@@ -105,6 +105,10 @@ pub fn vertex_viscosity(char_quants: &CharQuantities) -> Viscosity {
 
 pub static PHYS_CLOSE_DIST: Lazy<Length> =
     Lazy::new(|| Length(0.5).micro());
+pub static PHYS_CLOSE_DIST_ONE_AT: Lazy<Length> =
+    Lazy::new(|| *PHYS_CLOSE_DIST);
+pub static PHYS_CLOSE_DIST_ZERO_AT: Lazy<Length> =
+    Lazy::new(|| PHYS_CLOSE_DIST.scale(3.0));
 
 pub const CIL_MAG: f64 = 60.0;
 
@@ -117,6 +121,7 @@ pub static RAW_COA_PARAMS_WITH_ZERO_MAG: Lazy<RawCoaParams> =
         los_penalty: COA_LOS_PENALTY,
         halfmax_dist: *COA_HALFMAX_DIST,
         mag: 0.0,
+        too_close_dist: Length(1.0).micro(), //PHYS_CLOSE_DIST.scale(2.0),
     });
 
 pub static RAW_WORLD_PARAMS: Lazy<RawWorldParameters> =
@@ -129,13 +134,12 @@ pub static RAW_WORLD_PARAMS: Lazy<RawWorldParameters> =
                 chem_attr: None,
                 bdry: None,
                 phys_contact: RawPhysicalContactParams {
-                    range: RawCloseBounds::new(
-                        one_at.scale(2.0),
-                        one_at,
-                    ),
+                    crl_one_at: one_at,
+                    zero_at: one_at.scale(2.0),
                     adh_mag: None,
                     cal_mag: None,
                     cil_mag: CIL_MAG,
+                    adh_break: None,
                 },
             },
         }
