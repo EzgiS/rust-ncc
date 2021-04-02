@@ -1,6 +1,5 @@
 use crate::exp_setup::defaults::{
-    PHYS_CLOSE_DIST_ONE_AT, PHYS_CLOSE_DIST_ZERO_AT,
-    RAW_COA_PARAMS_WITH_ZERO_MAG,
+    PHYS_CLOSE_DIST_ONE_AT, PHYS_CLOSE_DIST_ZERO_AT, RAW_COA_PARAMS_WITH_ZERO_MAG,
 };
 use crate::exp_setup::{ExperimentType, RgtpDistribDefs};
 use crate::parameters::quantity::{Length, Quantity, Time};
@@ -44,26 +43,18 @@ impl From<ParsedIntOpts> for IntegratorOpts {
             ParsedIntOpts::RkDp5(opts) => {
                 let default = RkOpts::default();
                 IntegratorOpts::Rkdp5(RkOpts {
-                    max_iters: opts
-                        .max_iters
-                        .unwrap_or(default.max_iters),
+                    max_iters: opts.max_iters.unwrap_or(default.max_iters),
                     atol: opts.atol.unwrap_or(default.atol),
                     rtol: opts.rtol.unwrap_or(default.rtol),
-                    init_h_scale: opts
-                        .init_h_scale
-                        .unwrap_or(default.init_h_scale),
+                    init_h_scale: opts.init_h_scale.unwrap_or(default.init_h_scale),
                 })
             }
-            ParsedIntOpts::Euler(opts) => {
-                IntegratorOpts::Euler(EulerOpts {
-                    num_int_steps: opts.num_int_steps.unwrap_or(10),
-                })
-            }
-            ParsedIntOpts::EulerDebug(opts) => {
-                IntegratorOpts::EulerDebug(EulerOpts {
-                    num_int_steps: opts.num_int_steps.unwrap_or(10),
-                })
-            }
+            ParsedIntOpts::Euler(opts) => IntegratorOpts::Euler(EulerOpts {
+                num_int_steps: opts.num_int_steps.unwrap_or(10),
+            }),
+            ParsedIntOpts::EulerDebug(opts) => IntegratorOpts::EulerDebug(EulerOpts {
+                num_int_steps: opts.num_int_steps.unwrap_or(10),
+            }),
         }
     }
 }
@@ -90,9 +81,6 @@ struct ParsedExpArgs {
     crl_one_at: Option<f64>,
     zero_at: Option<f64>,
     too_close_dist: Option<f64>,
-    chem_center: Option<Vec<f64>>,
-    chem_mag: Option<f64>,
-    chem_drop: Option<f64>,
     snap_period: f64,
     max_on_ram: Option<usize>,
     randomization: bool,
@@ -113,9 +101,6 @@ pub struct ExperimentArgs {
     pub cal_mag: Option<f64>,
     pub adh_scale: Option<f64>,
     pub adh_break: Option<Length>,
-    pub chem_center: Option<[Length; 2]>,
-    pub chem_mag: Option<f64>,
-    pub chem_drop: Option<f64>,
     pub crl_one_at: Length,
     pub zero_at: Length,
     pub too_close_dist: Length,
@@ -130,9 +115,7 @@ pub struct ExperimentArgs {
 impl TryFrom<&PathBuf> for ExperimentArgs {
     type Error = Box<dyn error::Error>;
 
-    fn try_from(
-        json_path: &PathBuf,
-    ) -> Result<ExperimentArgs, Box<dyn error::Error>> {
+    fn try_from(json_path: &PathBuf) -> Result<ExperimentArgs, Box<dyn error::Error>> {
         let mut f = OpenOptions::new().read(true).open(json_path)?;
         let mut json_out = String::new();
         f.read_to_string(&mut json_out)?;
@@ -148,9 +131,6 @@ impl TryFrom<&PathBuf> for ExperimentArgs {
             crl_one_at,
             zero_at,
             too_close_dist,
-            chem_center,
-            chem_mag,
-            chem_drop,
             snap_period,
             max_on_ram,
             randomization,
@@ -185,22 +165,8 @@ impl TryFrom<&PathBuf> for ExperimentArgs {
             cal_mag,
             adh_scale,
             adh_break: adh_break.map(|v| Length(v).micro()),
-            chem_center: chem_center.map(|v| {
-                let mut r = [Length(0.0); 2];
-                (0..r.len())
-                    .for_each(|ix| r[ix] = Length(v[ix]).micro());
-                r
-            }),
-            chem_mag,
-            chem_drop,
-            crl_one_at: crl_one_at.map_or_else(
-                || *PHYS_CLOSE_DIST_ONE_AT,
-                |v| Length(v).micro(),
-            ),
-            zero_at: zero_at.map_or_else(
-                || *PHYS_CLOSE_DIST_ZERO_AT,
-                |v| Length(v).micro(),
-            ),
+            crl_one_at: crl_one_at.map_or_else(|| *PHYS_CLOSE_DIST_ONE_AT, |v| Length(v).micro()),
+            zero_at: zero_at.map_or_else(|| *PHYS_CLOSE_DIST_ZERO_AT, |v| Length(v).micro()),
             too_close_dist: too_close_dist.map_or_else(
                 || RAW_COA_PARAMS_WITH_ZERO_MAG.too_close_dist,
                 |v| Length(v).micro(),

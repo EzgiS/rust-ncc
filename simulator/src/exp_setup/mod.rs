@@ -8,9 +8,7 @@
 
 use crate::exp_setup::exp_parser::ExperimentArgs;
 use crate::math::v2d::V2d;
-use crate::parameters::{
-    CharQuantities, Parameters, WorldParameters,
-};
+use crate::parameters::{CharQuantities, Parameters, WorldParameters};
 use crate::utils::pcg32::Pcg32;
 use crate::world::IntegratorOpts;
 use crate::{Directories, NVERTS};
@@ -22,9 +20,7 @@ pub mod n_cells;
 pub mod pair;
 pub mod py_compare;
 
-use crate::cell::chemistry::distrib_gens::{
-    random, specific_random, specific_uniform,
-};
+use crate::cell::chemistry::distrib_gens::{random, specific_random, specific_uniform};
 use crate::exp_setup::markers::mark_verts;
 use crate::parameters::quantity::Time;
 use serde::{Deserialize, Serialize};
@@ -34,6 +30,8 @@ use std::path::PathBuf;
 pub enum ExperimentType {
     NCells {
         num_cells: usize,
+        chem_dist: Option<f64>,
+        chem_mag: Option<f64>,
     },
     Pair {
         sep_in_cell_diams: usize,
@@ -93,24 +91,21 @@ pub struct PairRgtpDistribDefs {
 
 impl Default for ExperimentType {
     fn default() -> Self {
-        ExperimentType::NCells { num_cells: 1 }
+        ExperimentType::NCells {
+            chem_dist: None,
+            chem_mag: None,
+            num_cells: 1,
+        }
     }
 }
 
 /// Generate the experiment, so that it can be run.
-pub fn generate(
-    dirs: Directories,
-    args: ExperimentArgs,
-) -> Vec<Experiment> {
+pub fn generate(dirs: Directories, args: ExperimentArgs) -> Vec<Experiment> {
     dirs.make();
     match &args.ty {
-        ExperimentType::NCells { .. } => {
-            n_cells::generate(dirs, args)
-        }
+        ExperimentType::NCells { .. } => n_cells::generate(dirs, args),
         ExperimentType::Pair { .. } => pair::generate(dirs, args),
-        ExperimentType::PyCompare { .. } => {
-            py_compare::generate(dirs, args)
-        }
+        ExperimentType::PyCompare { .. } => py_compare::generate(dirs, args),
     }
 }
 
