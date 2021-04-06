@@ -55,7 +55,8 @@
       "label_cells": false,
       "follow_group": false,
       "show_trails":  true,
-      "arrow_scale":  1.0
+      "arrow_scale":  1.0,
+      "show_group_trail": true
     }
   ]
 }
